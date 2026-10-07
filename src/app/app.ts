@@ -1,5 +1,8 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
+import { LESSONS } from './features/lessons/lessons.registry';
 
 interface NavItem {
   path: string;
@@ -19,6 +22,27 @@ export class App {
     { path: '/acordes', label: 'Troca de Acordes', icon: '🔁' },
     { path: '/caged', label: 'Sistema CAGED', icon: '🧩' },
     { path: '/triades', label: 'Tríades', icon: '🔺' },
-    { path: '/licoes', label: 'Lições da Aula', icon: '📒' },
   ];
+  protected readonly lessons = LESSONS;
+
+  /** Whether the "Lições da Aula" submenu is expanded. */
+  protected readonly lessonsOpen = signal(false);
+  /** Whether the current page is one of the lessons. */
+  protected readonly lessonsActive = signal(false);
+
+  constructor() {
+    inject(Router)
+      .events.pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((event) => {
+        const inLessons = event.urlAfterRedirects.startsWith('/licoes');
+        this.lessonsActive.set(inLessons);
+        // Landing on a lesson reveals the submenu so the current lesson is always visible.
+        if (inLessons) {
+          this.lessonsOpen.set(true);
+        }
+      });
+  }
 }

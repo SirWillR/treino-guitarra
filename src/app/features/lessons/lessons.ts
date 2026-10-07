@@ -1,44 +1,49 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
 import { LESSONS } from './lessons.registry';
 
+/** Frame around the lesson pages; the lessons themselves are listed in the sidebar submenu. */
 @Component({
   selector: 'app-lessons',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterOutlet],
   template: `
-    <header class="mb-5">
-      <h1 class="text-2xl font-bold text-white">Lições da Aula</h1>
-      <p class="mt-1 text-sm text-slate-400">Os exercícios e as sequências da aula, uma lição por vez.</p>
-    </header>
-
-    <nav class="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label="Lições">
-      @for (lesson of lessons; track lesson.slug; let i = $index) {
-        <a
-          class="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 transition hover:border-slate-600"
-          routerLinkActive="border-amber-400! bg-amber-400/10!"
-          #link="routerLinkActive"
-          [routerLink]="lesson.slug"
-        >
-          <span
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-            [class]="link.isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'"
-          >
-            {{ i + 1 }}
-          </span>
-          <span class="min-w-0">
-            <span class="block font-semibold" [class]="link.isActive ? 'text-amber-300' : 'text-slate-100'">
-              {{ lesson.title }}
-            </span>
-            <span class="block truncate text-xs text-slate-400">{{ lesson.summary }}</span>
-          </span>
-        </a>
+    <header class="mb-6">
+      <p class="text-xs font-semibold tracking-widest text-slate-500 uppercase">
+        Lições da Aula
+        @if (lesson(); as current) {
+          · {{ current.number }} de {{ total }}
+        }
+      </p>
+      <h1 class="mt-1 text-2xl font-bold text-white">{{ lesson()?.title ?? 'Lições da Aula' }}</h1>
+      @if (lesson(); as current) {
+        <p class="mt-1 text-sm text-slate-400">{{ current.summary }}</p>
       }
-    </nav>
+    </header>
 
     <router-outlet />
   `,
 })
 export class Lessons {
-  protected readonly lessons = LESSONS;
+  private readonly router = inject(Router);
+
+  protected readonly total = LESSONS.length;
+  private readonly url = signal(this.router.url);
+
+  protected readonly lesson = computed(() => {
+    const slug = this.url().split(/[?#]/)[0].split('/')[2];
+    const index = LESSONS.findIndex((entry) => entry.slug === slug);
+    return index < 0 ? null : { ...LESSONS[index], number: index + 1 };
+  });
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((event) => this.url.set(event.urlAfterRedirects));
+  }
 }

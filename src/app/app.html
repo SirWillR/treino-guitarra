@@ -1,6 +1,6 @@
 <div class="min-h-screen lg:flex">
   <aside
-    class="sticky top-0 z-10 border-b border-slate-800 bg-ink/95 backdrop-blur lg:h-screen lg:w-64 lg:shrink-0 lg:border-r lg:border-b-0"
+    class="sticky top-0 z-10 border-b border-slate-800 bg-ink/95 backdrop-blur lg:h-screen lg:w-64 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0"
   >
     <div class="px-5 pt-4 lg:pt-7">
       <div class="text-lg leading-tight font-bold text-white">
@@ -9,7 +9,7 @@
       <div class="text-xs tracking-[0.3em] text-slate-500 uppercase">Trainer</div>
     </div>
 
-    <nav class="flex gap-1 overflow-x-auto px-3 py-3 lg:mt-4 lg:flex-col" aria-label="Módulos">
+    <nav class="flex flex-wrap gap-1 px-3 py-3 lg:mt-4 lg:flex-col lg:flex-nowrap" aria-label="Módulos">
       @for (item of navItems; track item.path) {
         <a
           class="flex shrink-0 items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-800/60 hover:text-white"
@@ -19,6 +19,40 @@
           <span aria-hidden="true">{{ item.icon }}</span>
           {{ item.label }}
         </a>
+      }
+
+      <button
+        type="button"
+        class="flex shrink-0 cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-left text-sm font-medium transition hover:bg-slate-800/60 hover:text-white"
+        [class]="lessonsActive() ? 'text-amber-300' : 'text-slate-400'"
+        aria-controls="lessons-submenu"
+        [attr.aria-expanded]="lessonsOpen()"
+        (click)="lessonsOpen.set(!lessonsOpen())"
+      >
+        <span aria-hidden="true">📒</span>
+        Lições da Aula
+        <span class="ml-auto pl-2 text-xs transition-transform" [class.rotate-90]="lessonsOpen()" aria-hidden="true">▶</span>
+      </button>
+
+      <!-- Full-width so it wraps to its own row in the horizontal (tablet) menu. -->
+      @if (lessonsOpen()) {
+        <ul
+          id="lessons-submenu"
+          class="flex w-full flex-wrap gap-1 border-t border-slate-800 pt-2 lg:ml-5 lg:w-auto lg:flex-col lg:border-t-0 lg:border-l lg:pt-0 lg:pl-2"
+        >
+          @for (lesson of lessons; track lesson.slug; let i = $index) {
+            <li>
+              <a
+                class="flex items-center gap-2 rounded-lg border border-transparent px-3 py-1.5 text-sm text-slate-400 transition hover:bg-slate-800/60 hover:text-white"
+                routerLinkActive="border-amber-400/40! bg-amber-400/10! text-amber-300!"
+                [routerLink]="['/licoes', lesson.slug]"
+              >
+                <span class="text-xs tabular-nums opacity-60">{{ i + 1 }}.</span>
+                {{ lesson.title }}
+              </a>
+            </li>
+          }
+        </ul>
       }
     </nav>
   </aside>
