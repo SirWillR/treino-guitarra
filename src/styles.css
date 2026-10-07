@@ -1,0 +1,42 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+  --color-ink: #070b14;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-ink text-slate-200 antialiased;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-slate-800 bg-slate-900/60 p-5;
+  }
+
+  .panel-title {
+    @apply mb-3 text-xs font-semibold tracking-widest text-slate-400 uppercase;
+  }
+
+  .chip {
+    @apply cursor-pointer rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .chip-active {
+    @apply border-amber-400 bg-amber-400/15 text-amber-300 hover:border-amber-400 hover:text-amber-300;
+  }
+
+  .btn-primary {
+    @apply cursor-pointer rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-ghost {
+    @apply cursor-pointer rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+}
