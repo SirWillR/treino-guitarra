@@ -33,7 +33,7 @@ import { Fretboard } from '../fretboard/fretboard';
   `,
 })
 export class ScaleExercise {
-  /** Notes of the pattern in ascending order. */
+  /** Notes of the pattern in playing order. */
   readonly pattern = input.required<readonly ScaleExerciseStep[]>();
   /** Fret added to every `fretOffset`; the index finger's fret for relative patterns. */
   readonly startFret = input(1);
@@ -54,14 +54,27 @@ export class ScaleExercise {
     ...new Set(this.pattern().map((step) => step.string)),
   ]);
 
-  protected readonly markers = computed<FretMarker[]>(() =>
-    this.pattern().map((step, index) => ({
-      string: step.string,
-      fret: this.startFret() + step.fretOffset,
-      label: String(step.finger),
-      color: FINGER_COLORS[step.finger],
-      isRoot: step.isRoot,
-      active: index === this.activeIndex(),
-    })),
-  );
+  /** One marker per position: a sequence may visit the same fret more than once. */
+  protected readonly markers = computed<FretMarker[]>(() => {
+    const byPosition = new Map<string, FretMarker>();
+    this.pattern().forEach((step, index) => {
+      const fret = this.startFret() + step.fretOffset;
+      const key = `${step.string}:${fret}`;
+      const active = index === this.activeIndex();
+      const existing = byPosition.get(key);
+      if (existing) {
+        existing.active ||= active;
+        return;
+      }
+      byPosition.set(key, {
+        string: step.string,
+        fret,
+        label: String(step.finger),
+        color: FINGER_COLORS[step.finger],
+        isRoot: step.isRoot,
+        active,
+      });
+    });
+    return [...byPosition.values()];
+  });
 }

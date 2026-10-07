@@ -41,7 +41,7 @@ import { Metronome } from '../../shared/metronome/metronome';
             </div>
             <div class="text-sm text-slate-400">
               {{ now.finger === 0 ? now.fingerName : 'Dedo ' + now.finger + ' — ' + now.fingerName }}
-              · {{ now.ascending ? 'subindo' : 'descendo' }}
+              · {{ now.ascending ? directionLabels()[0] : directionLabels()[1] }}
             </div>
           } @else {
             <div class="font-semibold text-slate-300">Aperte ▶ para começar</div>
@@ -64,11 +64,13 @@ export class ExercisePlayer {
   private readonly metronome = inject(MetronomeService);
   private readonly theory = inject(MusicTheoryService);
 
-  /** Notes in ascending order. */
+  /** Notes in playing order; the second half of each lap plays them backwards. */
   readonly pattern = input.required<readonly ScaleExerciseStep[]>();
   /** Fret added to every `fretOffset` of the pattern. */
   readonly startFret = input(0);
   readonly idleHint = input('Sobe até a nota mais aguda e volta.');
+  /** Words for the first and the second half of a lap. */
+  readonly directionLabels = input<readonly [string, string]>(['subindo', 'descendo']);
 
   /** Index in `pattern` of the note being played; -1 when stopped. */
   readonly activeIndexChange = output<number>();

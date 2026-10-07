@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { WARMUP_PATTERN, WARMUP_TIPS } from '../../core/data/lessons.data';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { WARMUP_TIPS, WARMUP_VARIATIONS } from '../../core/data/lessons.data';
+import { MetronomeService } from '../../core/services/metronome.service';
 import { PracticeTips } from '../../shared/practice-tips/practice-tips';
 import { ScaleExercise } from '../../shared/scale-exercise/scale-exercise';
 import { ExercisePlayer } from './exercise-player';
@@ -13,11 +14,20 @@ const LAST_START_FRET = 12;
   imports: [ScaleExercise, ExercisePlayer, PracticeTips],
   template: `
     <section class="panel mb-5">
-      <div class="mb-4">
-        <h2 class="text-lg font-semibold text-white">Cromático 1-2-3-4</h2>
+      <h2 class="panel-title">Variação</h2>
+      <div class="mb-4 flex flex-wrap gap-2">
+        @for (item of variations; track item.id) {
+          <button type="button" class="chip" [class.chip-active]="variation().id === item.id" (click)="select(item.id)">
+            {{ item.name }}
+          </button>
+        }
+      </div>
+
+      <div class="mb-5">
+        <h3 class="text-lg font-semibold text-white">{{ variation().name }}</h3>
+        <p class="mt-1 text-sm text-slate-300">{{ variation().description }}</p>
         <p class="mt-1 text-sm text-slate-400">
-          Um dedo por casa: indicador, médio, anelar e mínimo em quatro casas seguidas. Comece na 6ª corda,
-          suba corda por corda até a 1ª e volte. Serve de aquecimento antes de qualquer estudo.
+          <span class="font-semibold text-amber-300">Treina:</span> {{ variation().focus }}
         </p>
       </div>
 
@@ -30,7 +40,11 @@ const LAST_START_FRET = 12;
         }
       </div>
 
-      <app-scale-exercise [pattern]="pattern" [startFret]="startFret()" [activeIndex]="activeIndex()" />
+      <app-scale-exercise [pattern]="variation().steps" [startFret]="startFret()" [activeIndex]="activeIndex()" />
+      <p class="mt-3 text-sm text-slate-400">
+        Um dedo por casa: o número em cada ponto é o dedo. A ordem de tocar é a descrita acima — aperte ▶ para
+        ver nota por nota.
+      </p>
     </section>
 
     <section class="panel mb-5">
@@ -42,9 +56,10 @@ const LAST_START_FRET = 12;
         </label>
       </div>
       <app-exercise-player
-        [pattern]="pattern"
+        [pattern]="variation().steps"
         [startFret]="startFret()"
-        idleHint="Sobe da 6ª para a 1ª corda e volta."
+        [directionLabels]="['ida', 'volta']"
+        idleHint="Toca a sequência até o fim e volta de trás para frente."
         (activeIndexChange)="activeIndex.set($event)"
         (lap)="onLap()"
       />
@@ -54,13 +69,25 @@ const LAST_START_FRET = 12;
   `,
 })
 export class WarmupPractice {
-  protected readonly pattern = WARMUP_PATTERN;
+  private readonly metronome = inject(MetronomeService);
+
+  protected readonly variations = WARMUP_VARIATIONS;
   protected readonly tips = WARMUP_TIPS;
   protected readonly startFrets = Array.from({ length: LAST_START_FRET }, (_, i) => i + 1);
 
+  private readonly variationId = signal(WARMUP_VARIATIONS[0].id);
+  protected readonly variation = computed(
+    () => WARMUP_VARIATIONS.find((v) => v.id === this.variationId()) ?? WARMUP_VARIATIONS[0],
+  );
   protected readonly startFret = signal(1);
   protected readonly climb = signal(false);
   protected readonly activeIndex = signal(-1);
+
+  protected select(id: string): void {
+    this.variationId.set(id);
+    // A different sequence starts from its first note.
+    this.metronome.stop();
+  }
 
   protected onLap(): void {
     if (this.climb()) {

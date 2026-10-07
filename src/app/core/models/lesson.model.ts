@@ -17,6 +17,17 @@ export interface ScaleExerciseStep {
   isRoot?: boolean;
 }
 
+export interface WarmupVariation {
+  id: string;
+  name: string;
+  /** How it is played. */
+  description: string;
+  /** What it trains. */
+  focus: string;
+  /** Notes in playing order; `fretOffset` is relative to the index finger's fret. */
+  steps: readonly ScaleExerciseStep[];
+}
+
 export interface ScalePosition {
   /** Notes in ascending order; `fretOffset` holds absolute frets. */
   steps: ScaleExerciseStep[];

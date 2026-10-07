@@ -16,13 +16,13 @@ export const LESSONS: readonly LessonEntry[] = [
   {
     slug: 'aquecimento',
     title: 'Aquecimento',
-    summary: 'Cromático 1-2-3-4 em todas as cordas',
+    summary: 'Cromático 1-2-3-4 e variações',
     loadComponent: () => import('./warmup-practice').then((m) => m.WarmupPractice),
   },
   {
     slug: 'escala',
     title: 'Escala & Digitação',
-    summary: 'Escala maior nas 6 cordas e o padrão da aula',
+    summary: 'O padrão da aula (cordas 5, 4 e 3) e a escala maior nas 6 cordas',
     loadComponent: () => import('./scale-practice').then((m) => m.ScalePractice),
   },
   {

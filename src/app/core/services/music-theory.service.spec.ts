@@ -1,4 +1,5 @@
 import { CHORDS } from '../data/chords.data';
+import { TEACHER_LESSON, WARMUP_VARIATIONS } from '../data/lessons.data';
 import { CAGED_SHAPE_NAMES } from '../models/caged.model';
 import { NOTE_NAMES } from '../models/note.model';
 import { STRING_SETS } from '../models/triad.model';
@@ -136,6 +137,39 @@ describe('MusicTheoryService', () => {
         expect(open.every((s) => s.finger === 0), label).toBe(true);
       });
     }
+  });
+
+  it("plays one octave of the major scale with the teacher's pattern", () => {
+    const notesFrom = (startFret: number) =>
+      TEACHER_LESSON.scalePattern.map((s) => theory.noteAt(s.string, startFret + s.fretOffset));
+
+    expect(notesFrom(2)).toEqual(['C', 'D', 'E', 'F', 'G', 'A', 'B', 'C']);
+    expect(TEACHER_LESSON.scalePattern[0]).toMatchObject({ string: 5, finger: 2, isRoot: true });
+    for (const startFret of TEACHER_LESSON.scaleStartFrets) {
+      const notes = notesFrom(startFret);
+      expect(notes.slice(0, 7), `start ${startFret}`).toEqual(theory.majorScale(notes[0]));
+    }
+  });
+
+  it('keeps one finger per fret in every warm-up variation', () => {
+    const sequence = (id: string) =>
+      WARMUP_VARIATIONS.find((v) => v.id === id)!.steps.map((s) => `${s.finger}@${s.string}`);
+
+    for (const variation of WARMUP_VARIATIONS) {
+      expect(new Set(variation.steps.map((s) => s.finger)), variation.id).toEqual(new Set([1, 2, 3, 4]));
+      for (const step of variation.steps) {
+        expect(step.fretOffset, variation.id).toBe(step.finger - 1);
+        expect(step.string, variation.id).toBeGreaterThanOrEqual(1);
+        expect(step.string, variation.id).toBeLessThanOrEqual(6);
+      }
+    }
+    expect(sequence('diagonal').slice(0, 8)).toEqual([
+      '1@6', '2@5', '3@4', '4@3', '1@5', '2@4', '3@3', '4@2',
+    ]);
+    expect(sequence('spider').slice(0, 8)).toEqual([
+      '1@6', '2@5', '3@6', '4@5', '1@5', '2@4', '3@5', '4@4',
+    ]);
+    expect(sequence('1324').slice(0, 4)).toEqual(['1@6', '3@6', '2@6', '4@6']);
   });
 
   it('maps the three inversions of C major on strings 1-2-3', () => {
