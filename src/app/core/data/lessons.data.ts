@@ -1,18 +1,50 @@
-import { TeacherLesson } from '../models/lesson.model';
+import { Finger } from '../models/chord.model';
+import { PracticeTip, ScaleExerciseStep, TeacherLesson } from '../models/lesson.model';
 
-export const FINGER_NAMES: Record<1 | 2 | 3 | 4, string> = {
+export const FINGER_NAMES: Record<Finger, string> = {
+  0: 'Corda solta',
   1: 'Indicador',
   2: 'Médio',
   3: 'Anelar',
   4: 'Mínimo',
 };
 
-export const FINGER_COLORS: Record<1 | 2 | 3 | 4, string> = {
+export const FINGER_COLORS: Record<Finger, string> = {
+  0: '#94a3b8',
   1: '#38bdf8',
   2: '#34d399',
   3: '#fbbf24',
   4: '#f472b6',
 };
+
+/** Chromatic warm-up: one finger per fret on every string, from string 6 up to string 1. */
+export const WARMUP_PATTERN: readonly ScaleExerciseStep[] = ([6, 5, 4, 3, 2, 1] as const).flatMap(
+  (string) => ([1, 2, 3, 4] as const).map((finger) => ({ string, fretOffset: finger - 1, finger })),
+);
+
+/** General technique advice (not from the teacher's notes). */
+export const WARMUP_TIPS: readonly PracticeTip[] = [
+  {
+    icon: '🐢',
+    title: 'Devagar primeiro',
+    body: 'Comece em 60 BPM, uma nota por tempo. Só aumente a velocidade quando todas as notas saírem limpas e iguais.',
+  },
+  {
+    icon: '📌',
+    title: 'Dedos ficam na corda',
+    body: 'Ao subir (1-2-3-4), não levante o dedo anterior quando o próximo descer: no dedo 4, os quatro dedos estão apoiados. Isso treina abertura e economia de movimento.',
+  },
+  {
+    icon: '🧘',
+    title: 'Mão e ombros relaxados',
+    body: 'Aperte só o suficiente para a nota soar. Se sentir tensão ou dor, pare, solte as mãos e recomece mais devagar — aquecimento não é teste de força.',
+  },
+  {
+    icon: '↓↑',
+    title: 'Palhetada alternada',
+    body: 'Baixo, cima, baixo, cima — sem repetir o sentido, inclusive na troca de corda.',
+  },
+];
 
 export const TEACHER_LESSON: TeacherLesson = {
   // Ascending order: from the lowest note (string 3) to the highest (string 1).

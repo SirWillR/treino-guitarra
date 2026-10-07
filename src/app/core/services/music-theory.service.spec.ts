@@ -81,6 +81,63 @@ describe('MusicTheoryService', () => {
     }
   });
 
+  it('lays out G major in the familiar second-position fingering', () => {
+    const first = theory.majorScalePositions('G')[0];
+    const onString = (string: number) =>
+      first.steps.filter((s) => s.string === string).map((s) => [s.fretOffset, s.finger]);
+
+    expect(onString(6)).toEqual([[2, 1], [3, 2], [5, 4]]);
+    expect(onString(4)).toEqual([[2, 1], [4, 3], [5, 4]]);
+    expect(onString(2)).toEqual([[3, 2], [5, 4]]);
+    expect(first.steps.filter((s) => s.isRoot).map((s) => s.string)).toEqual([6, 4, 1]);
+  });
+
+  it('builds five gap-free, playable major scale positions in every key', () => {
+    const openMidi: Record<number, number> = { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40 };
+
+    for (const root of NOTE_NAMES) {
+      const scale = theory.majorScale(root);
+      const positions = theory.majorScalePositions(root);
+      expect(positions, root).toHaveLength(5);
+
+      positions.forEach((position, p) => {
+        const label = `${root} position ${p + 1}`;
+        const notes = position.steps.map((s) => theory.noteAt(s.string, s.fretOffset));
+        const pitches = position.steps.map((s) => openMidi[s.string] + s.fretOffset);
+
+        expect(position.lowestFret, label).toBeGreaterThanOrEqual(0);
+        expect(position.highestFret, label).toBeLessThanOrEqual(MAX_FRET);
+        expect(position.highestFret - position.lowestFret, label).toBeLessThanOrEqual(4);
+
+        // Ascending, and each note is the next degree of the scale: nothing skipped or repeated.
+        notes.forEach((note, i) => {
+          expect(scale, label).toContain(note);
+          if (i > 0) {
+            expect(pitches[i], label).toBeGreaterThan(pitches[i - 1]);
+            expect(scale.indexOf(note), label).toBe((scale.indexOf(notes[i - 1]) + 1) % 7);
+          }
+        });
+
+        // Fingers follow the frets: a higher fret takes a higher finger, without over-stretching.
+        for (const string of [1, 2, 3, 4, 5, 6]) {
+          const onString = position.steps.filter((s) => s.string === string && s.fretOffset > 0);
+          onString.forEach((step, i) => {
+            expect(step.finger, label).toBeGreaterThanOrEqual(1);
+            expect(step.finger, label).toBeLessThanOrEqual(4);
+            if (i > 0) {
+              const fretGap = step.fretOffset - onString[i - 1].fretOffset;
+              const fingerGap = step.finger - onString[i - 1].finger;
+              expect(fingerGap, label).toBeGreaterThanOrEqual(1);
+              expect(fingerGap, label).toBeLessThanOrEqual(fretGap);
+            }
+          });
+        }
+        const open = position.steps.filter((s) => s.fretOffset === 0);
+        expect(open.every((s) => s.finger === 0), label).toBe(true);
+      });
+    }
+  });
+
   it('maps the three inversions of C major on strings 1-2-3', () => {
     const voicings = theory.triadVoicings('C', 'major', '1-2-3');
     const frets = (inversion: string) =>

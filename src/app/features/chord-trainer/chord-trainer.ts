@@ -85,8 +85,9 @@ const PRESETS: readonly { label: string; chordIds: readonly string[] }[] = [
     <section class="panel">
       <h2 class="panel-title">Dicionário de acordes</h2>
       <p class="mb-4 text-sm text-slate-400">
-        Números = dedos (1 indicador … 4 mínimo) · O = corda solta · X = corda abafada. Clique para adicionar
-        ou remover da sequência (máx. {{ maxChords }}).
+        Os 7 acordes maiores e os 7 menores. Números = dedos (1 indicador … 4 mínimo) · O = corda solta ·
+        X = corda abafada · barra = pestana com o dedo 1. Clique para adicionar ou remover da sequência
+        (máx. {{ maxChords }}).
       </p>
       @for (group of groups; track group.label) {
         <h3 class="mt-5 mb-3 text-sm font-semibold text-slate-200">{{ group.label }}</h3>
@@ -101,6 +102,9 @@ const PRESETS: readonly { label: string; chordIds: readonly string[] }[] = [
               (click)="toggle(chord.id)"
             >
               <app-chord-diagram [chord]="chord" />
+              @if (chord.barre) {
+                <span class="mt-1 block text-center text-[11px] font-semibold tracking-wide text-sky-300 uppercase">pestana</span>
+              }
             </button>
           }
         </div>
@@ -115,10 +119,12 @@ export class ChordTrainer {
   protected readonly barOptions = [1, 2, 4] as const;
   protected readonly minChords = MIN_CHORDS;
   protected readonly maxChords = MAX_CHORDS;
-  protected readonly groups = CHORD_GROUPS.map(({ group, label }) => ({
+  // Beginner scope: the seven major and seven minor chords. Other groups stay in the data only.
+  protected readonly groups = CHORD_GROUPS.filter(
+    ({ group }) => group === 'major' || group === 'minor',
+  ).map(({ group, label }) => ({
     label,
-    // The anchored G duplicates the open G for dictionary purposes.
-    chords: CHORDS.filter((chord) => chord.group === group && chord.id !== 'G-anchored'),
+    chords: CHORDS.filter((chord) => chord.group === group),
   }));
 
   protected readonly sequenceIds = signal<readonly string[]>(PRESETS[0].chordIds);

@@ -11,7 +11,17 @@ export interface ScaleExerciseStep {
   string: GuitarString;
   /** Frets above the starting position (0 = the starting fret itself). */
   fretOffset: number;
-  finger: Exclude<Finger, 0>;
+  /** 0 = open string. */
+  finger: Finger;
+  /** Tonic of the scale, drawn with emphasis. */
+  isRoot?: boolean;
+}
+
+export interface ScalePosition {
+  /** Notes in ascending order; `fretOffset` holds absolute frets. */
+  steps: ScaleExerciseStep[];
+  lowestFret: number;
+  highestFret: number;
 }
 
 export interface ChordProgression {

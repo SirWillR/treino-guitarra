@@ -114,7 +114,7 @@ interface Dot {
           <g
             class="pointer-events-none"
             [attr.transform]="'translate(' + dot.x + ' ' + dot.y + ')'"
-            [attr.opacity]="dot.ghost ? 0.3 : 1"
+            [attr.opacity]="dot.ghost ? 0.5 : 1"
           >
             @if (dot.active) {
               <circle

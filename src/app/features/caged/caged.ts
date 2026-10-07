@@ -9,19 +9,28 @@ import {
 } from '../../core/models/note.model';
 import { MusicTheoryService } from '../../core/services/music-theory.service';
 import { Fretboard } from '../../shared/fretboard/fretboard';
+import { HelpDialog } from '../../shared/help-dialog/help-dialog';
 import { NotePicker } from '../../shared/note-picker/note-picker';
+import { CagedHelp } from './caged-help';
 
 @Component({
   selector: 'app-caged',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [Fretboard, NotePicker],
+  imports: [Fretboard, NotePicker, HelpDialog, CagedHelp],
   template: `
-    <header class="mb-6">
-      <h1 class="text-2xl font-bold text-white">Sistema CAGED</h1>
-      <p class="mt-1 text-sm text-slate-400">
-        Um mesmo acorde em cinco desenhos ao longo do braço. Ache a tônica e o shape vem junto.
-      </p>
+    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-white">Sistema CAGED</h1>
+        <p class="mt-1 text-sm text-slate-400">
+          Um mesmo acorde em cinco desenhos ao longo do braço. Ache a tônica e o shape vem junto.
+        </p>
+      </div>
+      <button type="button" class="btn-ghost" (click)="help.open()">❓ O que é isso?</button>
     </header>
+
+    <app-help-dialog #help title="O que é o Sistema CAGED?" firstVisitKey="fht.help.caged">
+      <app-caged-help />
+    </app-help-dialog>
 
     <section class="panel mb-5 grid gap-5 lg:grid-cols-[1fr_auto]">
       <div>

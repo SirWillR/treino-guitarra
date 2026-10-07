@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { LESSONS } from './features/lessons/lessons.registry';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'braco' },
@@ -28,6 +29,15 @@ export const routes: Routes = [
     path: 'licoes',
     title: 'Lições da Aula · Fretboard & Harmony Trainer',
     loadComponent: () => import('./features/lessons/lessons').then((m) => m.Lessons),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: LESSONS[0].slug },
+      ...LESSONS.map((lesson) => ({
+        path: lesson.slug,
+        title: `${lesson.title} · Fretboard & Harmony Trainer`,
+        loadComponent: lesson.loadComponent,
+      })),
+      { path: '**', redirectTo: LESSONS[0].slug },
+    ],
   },
   { path: '**', redirectTo: 'braco' },
 ];

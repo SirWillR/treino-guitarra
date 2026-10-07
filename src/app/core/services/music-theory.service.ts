@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { CAGED_SHAPES } from '../data/caged-shapes.data';
+import { MAJOR_SCALE_POSITIONS } from '../data/scale-positions.data';
 import { CagedAnchor, CagedShape, CagedShapeName } from '../models/caged.model';
-import { Chord } from '../models/chord.model';
+import { Chord, Finger } from '../models/chord.model';
+import { ScaleExerciseStep, ScalePosition } from '../models/lesson.model';
 import { ALL_STRINGS, FretMarker, FretPosition, GuitarString } from '../models/fretboard.model';
 import {
   ChordQuality,
@@ -30,6 +32,8 @@ const CHORD_FORMULAS: Record<ChordQuality, readonly Interval[]> = {
   minor7: ['R', 'b3', '5', 'b7'],
   add9: ['R', '3', '5', '9'],
 };
+
+const MAJOR_SCALE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
 
 const INVERSIONS: readonly TriadInversion[] = ['root', 'first', 'second'];
 
@@ -96,6 +100,57 @@ export class MusicTheoryService {
       }
     });
     return notes;
+  }
+
+  majorScale(root: NoteName): NoteName[] {
+    return MAJOR_SCALE_SEMITONES.map((semitones) => this.transpose(root, semitones));
+  }
+
+  /**
+   * The five positions of the major scale across all six strings, ordered from the nut upwards.
+   * Each one is moved by an octave when needed so it fits between the nut and the last fret.
+   */
+  majorScalePositions(root: NoteName): ScalePosition[] {
+    const rootFret = this.fretOf(root, 6);
+
+    return MAJOR_SCALE_POSITIONS.map((template) => {
+      const all = template.offsets.flat();
+      let shift = rootFret;
+      if (shift + Math.min(...all) < 1) {
+        shift += 12;
+      }
+      if (shift + Math.max(...all) > MAX_FRET) {
+        shift -= 12;
+      }
+
+      const steps: ScaleExerciseStep[] = template.offsets.flatMap((offsets, index) => {
+        const string = (6 - index) as GuitarString;
+        const frets = offsets.map((offset) => offset + shift);
+        const fingers = this.positionFingers(frets, template.baseOffset + shift);
+        return frets.map((fret, i) => ({
+          string,
+          fretOffset: fret,
+          finger: fingers[i],
+          isRoot: this.noteAt(string, fret) === root,
+        }));
+      });
+      const frets = steps.map((step) => step.fretOffset);
+      return { steps, lowestFret: Math.min(...frets), highestFret: Math.max(...frets) };
+    }).sort((a, b) => a.lowestFret - b.lowestFret);
+  }
+
+  /**
+   * One finger per fret from `indexFret`; when a string reaches one fret outside that span the
+   * hand shifts for that string instead of repeating a finger.
+   */
+  private positionFingers(frets: readonly number[], indexFret: number): Finger[] {
+    const fretted = frets.filter((fret) => fret > 0);
+    let base = Math.max(1, indexFret);
+    if (fretted.length > 0) {
+      base = Math.min(base, Math.min(...fretted));
+      base = Math.max(base, Math.max(...fretted) - 3);
+    }
+    return frets.map((fret) => (fret === 0 ? 0 : fret - base + 1) as Finger);
   }
 
   cagedShape(name: CagedShapeName, quality: TriadQuality): CagedShape {

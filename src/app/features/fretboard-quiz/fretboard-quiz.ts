@@ -85,6 +85,13 @@ const NEXT_QUESTION_DELAY_MS = 1100;
 
       <section class="panel mb-5">
         <app-fretboard [frets]="quizMaxFret" [markers]="quizMarkers()" [highlight]="answer() ? null : target()" />
+        <p class="mt-3 text-sm text-slate-400">
+          <strong class="text-slate-100 tabular-nums">{{ found().length }}</strong> de {{ totalPositions() }} casas
+          descobertas. As notas que você acerta ficam marcadas no braço.
+          @if (completedRounds() > 0) {
+            <span class="text-emerald-400">🎉 Braço completo {{ completedRounds() }}× — começando de novo.</span>
+          }
+        </p>
       </section>
 
       <section class="panel">
@@ -140,13 +147,12 @@ export class FretboardQuiz {
     if (!note) {
       return [];
     }
-    const color = NOTES.find((n) => n.name === note)?.color;
+    const color = noteColor(note);
     return this.theory.positionsOf(note).map((p) => ({ ...p, label: note, color }));
   });
 
   // Quiz
   protected readonly naturalsOnly = signal(false);
-  protected readonly target = signal<FretPosition>(this.randomPosition());
   protected readonly answer = signal<QuizAnswer | null>(null);
   protected readonly correct = signal(0);
   protected readonly total = signal(0);
@@ -159,15 +165,23 @@ export class FretboardQuiz {
   protected readonly options = computed(() =>
     this.naturalsOnly() ? NOTES.filter((n) => n.isNatural) : NOTES,
   );
-  /** After answering, the target is revealed with its note name. */
+  /** Positions already answered correctly; they stay on the neck, dimmed, as a memory aid. */
+  protected readonly found = signal<readonly FretMarker[]>([]);
+  protected readonly completedRounds = signal(0);
+  protected readonly totalPositions = computed(() => this.candidates(this.naturalsOnly()).length);
+  protected readonly target = signal<FretPosition>(this.randomPosition());
+
+  /** Found notes plus, right after answering, the target revealed with its note name. */
   protected readonly quizMarkers = computed<FretMarker[]>(() => {
     const answer = this.answer();
     if (!answer) {
-      return [];
+      return [...this.found()];
     }
+    const target = this.target();
     return [
+      ...this.found().filter((m) => !samePosition(m, target)),
       {
-        ...this.target(),
+        ...target,
         label: answer.expected,
         color: answer.correct ? '#34d399' : '#fb7185',
         isRoot: true,
@@ -204,6 +218,10 @@ export class FretboardQuiz {
       this.correct.update((n) => n + 1);
       this.streak.update((n) => n + 1);
       this.bestStreak.update((best) => Math.max(best, this.streak()));
+      this.found.update((found) => [
+        ...found,
+        { string, fret, label: expected, color: noteColor(expected), ghost: true },
+      ]);
     } else {
       this.streak.set(0);
     }
@@ -219,6 +237,8 @@ export class FretboardQuiz {
     this.correct.set(0);
     this.total.set(0);
     this.streak.set(0);
+    this.found.set([]);
+    this.completedRounds.set(0);
     this.nextQuestion();
   }
 
@@ -242,17 +262,24 @@ export class FretboardQuiz {
     this.target.set(this.randomPosition(this.target()));
   }
 
+  /** Picks a position not answered yet; once the neck is complete the marks are cleared. */
   private randomPosition(previous?: FretPosition): FretPosition {
-    const naturalsOnly = this.naturalsOnly();
-    for (;;) {
-      const string = ALL_STRINGS[Math.floor(Math.random() * ALL_STRINGS.length)];
-      const fret = Math.floor(Math.random() * (QUIZ_MAX_FRET + 1));
-      const isRepeat = previous?.string === string && previous.fret === fret;
-      const isAllowed = !naturalsOnly || !this.theory.noteAt(string, fret).includes('#');
-      if (!isRepeat && isAllowed) {
-        return { string, fret };
-      }
+    const allowed = this.candidates(this.naturalsOnly());
+    let pending = allowed.filter((p) => !this.found().some((m) => samePosition(m, p)));
+    if (pending.length === 0) {
+      this.found.set([]);
+      this.completedRounds.update((n) => n + 1);
+      pending = allowed;
     }
+    const fresh = pending.filter((p) => !previous || !samePosition(p, previous));
+    const pool = fresh.length > 0 ? fresh : pending;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  private candidates(naturalsOnly: boolean): FretPosition[] {
+    return ALL_STRINGS.flatMap((string) =>
+      Array.from({ length: QUIZ_MAX_FRET + 1 }, (_, fret) => ({ string, fret })),
+    ).filter((p) => !naturalsOnly || !this.theory.noteAt(p.string, p.fret).includes('#'));
   }
 
   private clearTimer(): void {
@@ -261,4 +288,12 @@ export class FretboardQuiz {
       this.nextTimer = null;
     }
   }
+}
+
+function samePosition(a: FretPosition, b: FretPosition): boolean {
+  return a.string === b.string && a.fret === b.fret;
+}
+
+function noteColor(note: NoteName): string | undefined {
+  return NOTES.find((n) => n.name === note)?.color;
 }
