@@ -7,7 +7,12 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ALL_STRINGS, FretMarker, FretPosition } from '../../core/models/fretboard.model';
+import {
+  ALL_STRINGS,
+  FretMarker,
+  FretPosition,
+  GuitarString,
+} from '../../core/models/fretboard.model';
 import { NoteName, NOTES } from '../../core/models/note.model';
 import { MusicTheoryService } from '../../core/services/music-theory.service';
 import { readStored, writeStored } from '../../core/utils/storage';
@@ -22,8 +27,45 @@ interface QuizAnswer {
   correct: boolean;
 }
 
+type QuizScope = 'all' | 'string' | 'inlays' | 'first' | 'bass';
+
+interface ScopeOption {
+  id: QuizScope;
+  label: string;
+  description: string;
+}
+
 const BEST_STREAK_KEY = 'fht.quiz.bestStreak';
 const QUIZ_MAX_FRET = 12;
+/** Frets with an inlay dot within the quiz range. */
+const INLAY_FRETS = [3, 5, 7, 9, 12];
+const FIRST_POSITION_MAX_FRET = 5;
+/** Order in which "one string at a time" moves on: from the lowest string to the highest. */
+const STRING_ORDER: readonly GuitarString[] = [6, 5, 4, 3, 2, 1];
+
+const SCOPES: readonly ScopeOption[] = [
+  { id: 'all', label: 'Braço todo', description: 'Qualquer casa, em qualquer corda, até a casa 12.' },
+  {
+    id: 'string',
+    label: 'Uma corda por vez',
+    description: 'Só a corda escolhida. Ao completar a corda, o quiz passa sozinho para a próxima.',
+  },
+  {
+    id: 'inlays',
+    label: 'Casas marcadas',
+    description: 'Só as casas com bolinha (3, 5, 7, 9 e 12): os pontos de referência do braço.',
+  },
+  {
+    id: 'first',
+    label: 'Primeiras casas',
+    description: 'Da corda solta até a casa 5: a região dos acordes abertos.',
+  },
+  {
+    id: 'bass',
+    label: 'Cordas 6 e 5',
+    description: 'As cordas onde ficam as tônicas das pestanas e dos shapes do CAGED.',
+  },
+];
 const NEXT_QUESTION_DELAY_MS = 1100;
 
 @Component({
@@ -84,12 +126,35 @@ const NEXT_QUESTION_DELAY_MS = 1100;
       </section>
 
       <section class="panel mb-5">
+        <h2 class="panel-title">Modo do quiz</h2>
+        <div class="flex flex-wrap gap-2">
+          @for (option of scopes; track option.id) {
+            <button type="button" class="chip" [class.chip-active]="scope() === option.id" (click)="setScope(option.id)">
+              {{ option.label }}
+            </button>
+          }
+        </div>
+        <p class="mt-3 text-sm text-slate-400">{{ scopeOption().description }}</p>
+
+        @if (scope() === 'string') {
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="mr-1 text-sm text-slate-400">Corda:</span>
+            @for (string of stringOrder; track string) {
+              <button type="button" class="chip" [class.chip-active]="quizString() === string" (click)="setQuizString(string)">
+                {{ string }}ª <span class="text-xs opacity-70">({{ openNote(string) }})</span>
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <section class="panel mb-5">
         <app-fretboard [frets]="quizMaxFret" [markers]="quizMarkers()" [highlight]="answer() ? null : target()" />
         <p class="mt-3 text-sm text-slate-400">
-          <strong class="text-slate-100 tabular-nums">{{ found().length }}</strong> de {{ totalPositions() }} casas
-          descobertas. As notas que você acerta ficam marcadas no braço.
+          <strong class="text-slate-100 tabular-nums">{{ foundInScope() }}</strong> de {{ totalPositions() }} casas
+          descobertas neste modo. As notas que você acerta ficam marcadas no braço.
           @if (completedRounds() > 0) {
-            <span class="text-emerald-400">🎉 Braço completo {{ completedRounds() }}× — começando de novo.</span>
+            <span class="text-emerald-400">🎉 Modo completo {{ completedRounds() }}× — começando de novo.</span>
           }
         </p>
       </section>
@@ -152,6 +217,15 @@ export class FretboardQuiz {
   });
 
   // Quiz
+  protected readonly scopes = SCOPES;
+  protected readonly stringOrder = STRING_ORDER;
+  /** Which part of the neck the questions are drawn from. */
+  protected readonly scope = signal<QuizScope>('all');
+  /** String in play when the scope is "one string at a time". */
+  protected readonly quizString = signal<GuitarString>(6);
+  protected readonly scopeOption = computed(
+    () => SCOPES.find((option) => option.id === this.scope()) ?? SCOPES[0],
+  );
   protected readonly naturalsOnly = signal(false);
   protected readonly answer = signal<QuizAnswer | null>(null);
   protected readonly correct = signal(0);
@@ -168,7 +242,10 @@ export class FretboardQuiz {
   /** Positions already answered correctly; they stay on the neck, dimmed, as a memory aid. */
   protected readonly found = signal<readonly FretMarker[]>([]);
   protected readonly completedRounds = signal(0);
-  protected readonly totalPositions = computed(() => this.candidates(this.naturalsOnly()).length);
+  protected readonly totalPositions = computed(() => this.candidates().length);
+  protected readonly foundInScope = computed(
+    () => this.candidates().filter((p) => this.isFound(p)).length,
+  );
   protected readonly target = signal<FretPosition>(this.randomPosition());
 
   /** Found notes plus, right after answering, the target revealed with its note name. */
@@ -233,6 +310,21 @@ export class FretboardQuiz {
     this.nextQuestion();
   }
 
+  protected setScope(scope: QuizScope): void {
+    this.scope.set(scope);
+    this.completedRounds.set(0);
+    this.nextQuestion();
+  }
+
+  protected setQuizString(string: GuitarString): void {
+    this.quizString.set(string);
+    this.nextQuestion();
+  }
+
+  protected openNote(string: GuitarString): NoteName {
+    return this.theory.noteAt(string, 0);
+  }
+
   protected reset(): void {
     this.correct.set(0);
     this.total.set(0);
@@ -262,24 +354,62 @@ export class FretboardQuiz {
     this.target.set(this.randomPosition(this.target()));
   }
 
-  /** Picks a position not answered yet; once the neck is complete the marks are cleared. */
+  /** Picks a position of the current mode not answered yet. */
   private randomPosition(previous?: FretPosition): FretPosition {
-    const allowed = this.candidates(this.naturalsOnly());
-    let pending = allowed.filter((p) => !this.found().some((m) => samePosition(m, p)));
+    let pending = this.pending();
+    if (pending.length === 0 && this.scope() === 'string') {
+      // String finished: move on to the next one that still has notes to find.
+      const start = STRING_ORDER.indexOf(this.quizString());
+      const next = STRING_ORDER.map((_, i) => STRING_ORDER[(start + 1 + i) % STRING_ORDER.length]).find(
+        (string) => this.pending(string).length > 0,
+      );
+      if (next) {
+        this.quizString.set(next);
+        pending = this.pending();
+      }
+    }
     if (pending.length === 0) {
-      this.found.set([]);
+      // Mode complete: clear its marks (all of them once every string is done) and start over.
+      const allowed = this.scope() === 'string' ? this.candidates('all') : this.candidates();
+      this.found.update((found) => found.filter((m) => !allowed.some((p) => samePosition(p, m))));
       this.completedRounds.update((n) => n + 1);
-      pending = allowed;
+      pending = this.pending();
     }
     const fresh = pending.filter((p) => !previous || !samePosition(p, previous));
     const pool = fresh.length > 0 ? fresh : pending;
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  private candidates(naturalsOnly: boolean): FretPosition[] {
-    return ALL_STRINGS.flatMap((string) =>
-      Array.from({ length: QUIZ_MAX_FRET + 1 }, (_, fret) => ({ string, fret })),
-    ).filter((p) => !naturalsOnly || !this.theory.noteAt(p.string, p.fret).includes('#'));
+  private pending(string = this.quizString()): FretPosition[] {
+    return this.candidates(this.scope(), string).filter((p) => !this.isFound(p));
+  }
+
+  private isFound(position: FretPosition): boolean {
+    return this.found().some((m) => samePosition(m, position));
+  }
+
+  /** Every position a mode can ask about, honouring the "naturals only" option. */
+  private candidates(scope = this.scope(), string = this.quizString()): FretPosition[] {
+    const naturalsOnly = this.naturalsOnly();
+    return ALL_STRINGS.flatMap((s) =>
+      Array.from({ length: QUIZ_MAX_FRET + 1 }, (_, fret): FretPosition => ({ string: s, fret })),
+    ).filter((p) => {
+      if (naturalsOnly && this.theory.noteAt(p.string, p.fret).includes('#')) {
+        return false;
+      }
+      switch (scope) {
+        case 'string':
+          return p.string === string;
+        case 'inlays':
+          return INLAY_FRETS.includes(p.fret);
+        case 'first':
+          return p.fret <= FIRST_POSITION_MAX_FRET;
+        case 'bass':
+          return p.string >= 5;
+        default:
+          return true;
+      }
+    });
   }
 
   private clearTimer(): void {
