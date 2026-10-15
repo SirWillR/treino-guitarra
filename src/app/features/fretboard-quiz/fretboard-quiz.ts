@@ -44,6 +44,7 @@ interface FilterOption<T> {
 }
 
 const BEST_STREAK_KEY = 'fht.quiz.bestStreak';
+const SHOW_FOUND_KEY = 'fht.quiz.showFound';
 const QUIZ_MAX_FRET = 12;
 /** Frets with an inlay dot within the quiz range. */
 const INLAY_FRETS = [3, 5, 7, 9, 12];
@@ -177,9 +178,13 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
 
       <section class="panel mb-4 sm:mb-5">
         <app-fretboard [frets]="quizMaxFret" [markers]="quizMarkers()" [highlight]="answer() ? null : target()" />
-        <p class="mt-3 text-sm text-slate-400">
+        <label class="mt-3 flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-300 sm:min-h-0">
+          <input type="checkbox" class="accent-amber-400" [checked]="showFound()" (change)="showFound.set(!showFound())" />
+          Manter as notas que acertei marcadas no braço
+        </label>
+        <p class="mt-2 text-sm text-slate-400">
           <strong class="text-slate-100 tabular-nums">{{ foundInScope() }}</strong> de {{ totalPositions() }} casas
-          descobertas nesta combinação. As notas que você acerta ficam marcadas no braço.
+          descobertas nesta combinação.
           @if (completedRounds() > 0) {
             <span class="text-emerald-400">🎉 Combinação completa {{ completedRounds() }}× — começando de novo.</span>
           }
@@ -256,6 +261,8 @@ export class FretboardQuiz {
   protected readonly total = signal(0);
   protected readonly streak = signal(0);
   protected readonly bestStreak = signal(readStored(BEST_STREAK_KEY, 0));
+  /** Whether the positions already answered stay drawn on the neck; they are tracked either way. */
+  protected readonly showFound = signal(readStored(SHOW_FOUND_KEY, true));
 
   protected readonly accuracy = computed(() =>
     this.total() === 0 ? 0 : Math.round((this.correct() / this.total()) * 100),
@@ -281,15 +288,16 @@ export class FretboardQuiz {
   });
   protected readonly target = signal<FretPosition>(this.randomPosition());
 
-  /** Found notes plus, right after answering, the target revealed with its note name. */
+  /** Found notes (when shown) plus, right after answering, the target revealed with its note name. */
   protected readonly quizMarkers = computed<FretMarker[]>(() => {
+    const found = this.showFound() ? this.found() : [];
     const answer = this.answer();
     if (!answer) {
-      return [...this.found()];
+      return [...found];
     }
     const target = this.target();
     return [
-      ...this.found().filter((m) => !samePosition(m, target)),
+      ...found.filter((m) => !samePosition(m, target)),
       {
         ...target,
         label: answer.expected,
@@ -303,6 +311,7 @@ export class FretboardQuiz {
 
   constructor() {
     effect(() => writeStored(BEST_STREAK_KEY, this.bestStreak()));
+    effect(() => writeStored(SHOW_FOUND_KEY, this.showFound()));
     inject(DestroyRef).onDestroy(() => this.clearTimer());
   }
 
