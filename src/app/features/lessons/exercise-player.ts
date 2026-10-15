@@ -25,15 +25,15 @@ import { Metronome } from '../../shared/metronome/metronome';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Metronome],
   template: `
-    <div class="mb-5 flex flex-wrap items-center gap-x-8 gap-y-4">
-      <div class="flex items-center gap-4" aria-live="off">
+    <div class="mb-5 flex flex-wrap items-center gap-x-8 gap-y-3">
+      <div class="flex w-full items-center gap-4 sm:w-auto" aria-live="off">
         <div
-          class="flex h-16 w-16 items-center justify-center rounded-2xl border text-3xl font-bold transition-colors duration-75"
+          class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border text-3xl font-bold transition-colors duration-75"
           [class]="current() ? 'border-amber-400 bg-amber-400/15 text-amber-300' : 'border-slate-800 bg-slate-900 text-slate-600'"
         >
           {{ current()?.pick ?? '↓' }}
         </div>
-        <div class="min-w-48">
+        <div class="min-w-0 flex-1 sm:min-w-48">
           @if (current(); as now) {
             <div class="font-semibold text-white">
               Corda {{ now.string }} · {{ now.fret === 0 ? 'solta' : 'casa ' + now.fret }}
@@ -51,7 +51,7 @@ import { Metronome } from '../../shared/metronome/metronome';
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <span class="mr-1 text-sm text-slate-400">Notas por tempo:</span>
+        <span class="mr-1 w-full text-sm text-slate-400 sm:w-auto">Notas por tempo:</span>
         <button type="button" class="chip" [class.chip-active]="notesPerBeat() === 1" (click)="notesPerBeat.set(1)">1 (semínimas)</button>
         <button type="button" class="chip" [class.chip-active]="notesPerBeat() === 2" (click)="notesPerBeat.set(2)">2 (colcheias)</button>
       </div>

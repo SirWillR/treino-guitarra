@@ -24,7 +24,7 @@ import { PracticeTips } from '../../shared/practice-tips/practice-tips';
 
     <section class="panel mb-5">
       <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-lg font-semibold text-white">{{ progression().label }}</h2>
+        <h2 class="w-full text-lg font-semibold text-white sm:w-auto">{{ progression().label }}</h2>
         <div class="flex flex-wrap items-center gap-2">
           <span class="mr-1 text-sm text-slate-400">Batidas por acorde:</span>
           @for (beats of beatOptions; track beats) {
@@ -42,10 +42,11 @@ import { PracticeTips } from '../../shared/practice-tips/practice-tips';
         </label>
       }
 
-      <div class="mb-6 flex flex-wrap items-center justify-center gap-3">
+      <!-- Phones: a 2-column grid of diagrams sized to the screen; wider screens: a row with arrows. -->
+      <div class="mb-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center">
         @for (chord of chords(); track $index; let chordIndex = $index) {
-          <div class="flex flex-col items-center gap-2">
-            <app-chord-diagram [chord]="chord" size="lg" [active]="metronome.isPlaying() && chordIndex === activeIndex()" />
+          <div class="flex w-full flex-col items-center gap-2 sm:w-52">
+            <app-chord-diagram [chord]="chord" size="fluid" [active]="metronome.isPlaying() && chordIndex === activeIndex()" />
             <div class="flex gap-1.5" aria-hidden="true">
               @for (beat of beatDots(); track beat) {
                 <span
@@ -60,7 +61,7 @@ import { PracticeTips } from '../../shared/practice-tips/practice-tips';
             </div>
           </div>
           @if (!$last) {
-            <span class="mb-6 text-2xl text-slate-600">→</span>
+            <span class="mb-6 hidden text-2xl text-slate-600 sm:inline">→</span>
           }
         }
       </div>

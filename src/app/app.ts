@@ -7,6 +7,8 @@ import { LESSONS } from './features/lessons/lessons.registry';
 interface NavItem {
   path: string;
   label: string;
+  /** Label for the narrow bottom tab bar. */
+  shortLabel: string;
   icon: string;
 }
 
@@ -15,18 +17,21 @@ interface NavItem {
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
+  host: { '(document:keydown.escape)': 'sheetOpen.set(false)' },
 })
 export class App {
   protected readonly navItems: readonly NavItem[] = [
-    { path: '/braco', label: 'Braço & Quiz', icon: '🎸' },
-    { path: '/acordes', label: 'Troca de Acordes', icon: '🔁' },
-    { path: '/caged', label: 'Sistema CAGED', icon: '🧩' },
-    { path: '/triades', label: 'Tríades', icon: '🔺' },
+    { path: '/braco', label: 'Braço & Quiz', shortLabel: 'Braço', icon: '🎸' },
+    { path: '/acordes', label: 'Troca de Acordes', shortLabel: 'Acordes', icon: '🔁' },
+    { path: '/caged', label: 'Sistema CAGED', shortLabel: 'CAGED', icon: '🧩' },
+    { path: '/triades', label: 'Tríades', shortLabel: 'Tríades', icon: '🔺' },
   ];
   protected readonly lessons = LESSONS;
 
-  /** Whether the "Lições da Aula" submenu is expanded. */
+  /** Whether the "Lições da Aula" submenu is expanded (desktop sidebar). */
   protected readonly lessonsOpen = signal(false);
+  /** Whether the lessons bottom sheet is open (phones and tablets). */
+  protected readonly sheetOpen = signal(false);
   /** Whether the current page is one of the lessons. */
   protected readonly lessonsActive = signal(false);
 
@@ -39,6 +44,7 @@ export class App {
       .subscribe((event) => {
         const inLessons = event.urlAfterRedirects.startsWith('/licoes');
         this.lessonsActive.set(inLessons);
+        this.sheetOpen.set(false);
         // Landing on a lesson reveals the submenu so the current lesson is always visible.
         if (inLessons) {
           this.lessonsOpen.set(true);

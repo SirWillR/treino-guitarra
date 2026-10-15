@@ -36,13 +36,14 @@ const PRESETS: readonly { label: string; chordIds: readonly string[] }[] = [
         }
       </div>
 
-      <div class="mb-6 flex flex-wrap items-center justify-center gap-3">
+      <!-- Phones: a 2×2 grid of diagrams sized to the screen; wider screens: a row with arrows. -->
+      <div class="mb-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center">
         @for (chord of sequence(); track $index) {
-          <div class="relative">
-            <app-chord-diagram [chord]="chord" size="lg" [active]="$index === activeIndex()" />
+          <div class="relative w-full sm:w-52">
+            <app-chord-diagram [chord]="chord" size="fluid" [active]="$index === activeIndex()" />
             <button
               type="button"
-              class="absolute -top-2 -right-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-slate-700 text-xs text-slate-200 hover:bg-rose-500"
+              class="absolute -top-2 -right-2 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-slate-700 text-xs text-slate-200 hover:bg-rose-500"
               [attr.aria-label]="'Remover ' + chord.name"
               (click)="removeAt($index)"
             >
@@ -50,17 +51,17 @@ const PRESETS: readonly { label: string; chordIds: readonly string[] }[] = [
             </button>
           </div>
           @if (!$last) {
-            <span class="text-2xl text-slate-600">→</span>
+            <span class="hidden text-2xl text-slate-600 sm:inline">→</span>
           }
         } @empty {
-          <p class="py-10 text-slate-500">Clique nos acordes do dicionário abaixo para montar a sequência.</p>
+          <p class="col-span-2 py-10 text-center text-slate-500">Clique nos acordes do dicionário abaixo para montar a sequência.</p>
         }
       </div>
 
       @if (!canPlay()) {
         <p class="mb-4 text-center text-sm text-amber-300">Selecione pelo menos {{ minChords }} acordes para treinar.</p>
       } @else if (metronome.isPlaying()) {
-        <p class="mb-4 text-center text-sm text-slate-300" aria-live="off">
+        <p class="mb-4 text-center text-base text-slate-300 sm:text-sm" aria-live="off">
           Tocando <strong class="text-amber-300">{{ sequence()[activeIndex()].name }}</strong>
           · próximo <strong class="text-slate-100">{{ nextChord().name }}</strong> em
           <strong class="tabular-nums text-slate-100">{{ beatsLeft() }}</strong>
@@ -91,17 +92,17 @@ const PRESETS: readonly { label: string; chordIds: readonly string[] }[] = [
       </p>
       @for (group of groups; track group.label) {
         <h3 class="mt-5 mb-3 text-sm font-semibold text-slate-200">{{ group.label }}</h3>
-        <div class="flex flex-wrap gap-3">
+        <div class="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-3">
           @for (chord of group.chords; track chord.id) {
             <button
               type="button"
-              class="cursor-pointer rounded-xl transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70"
+              class="w-full cursor-pointer rounded-xl transition hover:-translate-y-0.5 sm:w-34 disabled:cursor-not-allowed disabled:opacity-70"
               [class]="isSelected(chord.id) ? 'ring-2 ring-amber-400' : ''"
               [attr.aria-pressed]="isSelected(chord.id)"
               [disabled]="!isSelected(chord.id) && isFull()"
               (click)="toggle(chord.id)"
             >
-              <app-chord-diagram [chord]="chord" />
+              <app-chord-diagram [chord]="chord" size="fluid" />
               @if (chord.barre) {
                 <span class="mt-1 block text-center text-[11px] font-semibold tracking-wide text-sky-300 uppercase">pestana</span>
               }

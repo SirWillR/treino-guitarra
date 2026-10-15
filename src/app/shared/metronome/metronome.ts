@@ -5,10 +5,11 @@ import { MAX_BPM, MetronomeService, MIN_BPM } from '../../core/services/metronom
   selector: 'app-metronome',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-4">
+    <!-- Phones: play, BPM and tap on the first row; the slider takes the whole second row. -->
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-4 sm:gap-x-6">
       <button
         type="button"
-        class="flex h-14 w-14 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl font-bold text-slate-950 transition"
+        class="flex h-16 w-16 shrink-0 sm:h-14 sm:w-14 cursor-pointer items-center justify-center rounded-full text-xl font-bold text-slate-950 transition"
         [class]="metronome.isPlaying() ? 'bg-rose-400 hover:bg-rose-300' : 'bg-amber-400 hover:bg-amber-300'"
         [attr.aria-label]="metronome.isPlaying() ? 'Parar metrônomo' : 'Iniciar metrônomo'"
         (click)="metronome.toggle()"
@@ -16,28 +17,30 @@ import { MAX_BPM, MetronomeService, MIN_BPM } from '../../core/services/metronom
         {{ metronome.isPlaying() ? '■' : '▶' }}
       </button>
 
-      <div class="min-w-24">
+      <div class="min-w-20 sm:min-w-24">
         <div class="text-4xl leading-none font-bold text-white tabular-nums">{{ metronome.bpm() }}</div>
         <div class="mt-1 text-xs tracking-widest text-slate-400 uppercase">BPM</div>
       </div>
 
-      <div class="flex min-w-56 flex-1 items-center gap-2">
-        <button type="button" class="chip" aria-label="Diminuir BPM" (click)="nudge(-1)">−</button>
+      <button type="button" class="btn-ghost ml-auto sm:hidden" (click)="metronome.tap()">Tap</button>
+
+      <div class="order-last flex w-full items-center gap-2 sm:order-0 sm:w-auto sm:min-w-56 sm:flex-1">
+        <button type="button" class="chip min-w-11" aria-label="Diminuir BPM" (click)="nudge(-1)">−</button>
         <input
           type="range"
-          class="h-2 flex-1 cursor-pointer accent-amber-400"
+          class="h-2 min-w-0 flex-1 cursor-pointer accent-amber-400"
           aria-label="BPM"
           [min]="minBpm"
           [max]="maxBpm"
           [value]="metronome.bpm()"
           (input)="onSlider($event)"
         />
-        <button type="button" class="chip" aria-label="Aumentar BPM" (click)="nudge(1)">+</button>
+        <button type="button" class="chip min-w-11" aria-label="Aumentar BPM" (click)="nudge(1)">+</button>
       </div>
 
-      <button type="button" class="btn-ghost" (click)="metronome.tap()">Tap tempo</button>
+      <button type="button" class="btn-ghost hidden sm:block" (click)="metronome.tap()">Tap tempo</button>
 
-      <div class="flex items-center gap-2" aria-hidden="true">
+      <div class="order-last flex w-full justify-center gap-2 sm:order-0 sm:w-auto sm:justify-start" aria-hidden="true">
         @for (beat of beats(); track beat) {
           <span
             class="h-3.5 w-3.5 rounded-full transition-colors duration-75"

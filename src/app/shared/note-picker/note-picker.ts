@@ -5,11 +5,11 @@ import { NoteName, NOTES } from '../../core/models/note.model';
   selector: 'app-note-picker',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-wrap gap-2" role="group" aria-label="Nota">
+    <div class="grid grid-cols-6 gap-1.5 sm:flex sm:flex-wrap sm:gap-2" role="group" aria-label="Nota">
       @for (note of notes; track note.name) {
         <button
           type="button"
-          class="chip min-w-12 text-center"
+          class="chip px-1 text-center sm:min-w-12 sm:px-3"
           [class.chip-active]="!colored() && value() === note.name"
           [style.border-color]="colored() && value() === note.name ? note.color : null"
           [style.background-color]="colored() && value() === note.name ? note.color : null"
@@ -19,7 +19,7 @@ import { NoteName, NOTES } from '../../core/models/note.model';
         >
           {{ note.name }}
           @if (note.flatName) {
-            <span class="text-[10px] opacity-60">/{{ note.flatName }}</span>
+            <span class="block text-[10px] leading-none opacity-60 sm:inline">/{{ note.flatName }}</span>
           }
         </button>
       }

@@ -10,7 +10,7 @@ const FRET_ROWS = 5;
 @Component({
   selector: 'app-chord-diagram',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'inline-block' },
+  host: { class: 'inline-block', '[class.w-full]': "size() === 'fluid'" },
   template: `
     <figure
       class="rounded-xl border p-2 transition duration-200"
@@ -20,12 +20,13 @@ const FRET_ROWS = 5;
           : 'border-slate-800 bg-slate-900/70'
       "
       [style.width.px]="widthPx()"
+      [class.w-full]="!widthPx()"
     >
       @if (showName()) {
         <figcaption
           class="text-center font-bold"
-          [class]="active() ? 'text-amber-300' : 'text-slate-100'"
-          [style.font-size.px]="widthPx() / 7"
+          [class]="(active() ? 'text-amber-300' : 'text-slate-100') + (widthPx() ? '' : ' text-xl')"
+          [style.font-size.px]="widthPx() ? widthPx()! / 7 : null"
         >
           {{ chord().name }}
         </figcaption>
@@ -82,7 +83,8 @@ const FRET_ROWS = 5;
 })
 export class ChordDiagram {
   readonly chord = input.required<Chord>();
-  readonly size = input<'sm' | 'md' | 'lg'>('md');
+  /** "fluid" fills the parent's width, for grids that shrink on phones. */
+  readonly size = input<'sm' | 'md' | 'lg' | 'fluid'>('md');
   /** Glowing state, used by the sequence players for the chord being played. */
   readonly active = input(false);
   readonly showName = input(true);
@@ -94,7 +96,7 @@ export class ChordDiagram {
   protected readonly stringXs = Array.from({ length: 6 }, (_, i) => LEFT_X + i * STRING_GAP);
   protected readonly fretYs = Array.from({ length: FRET_ROWS + 1 }, (_, i) => TOP_Y + i * FRET_GAP);
 
-  protected readonly widthPx = computed(() => ({ sm: 104, md: 136, lg: 208 })[this.size()]);
+  protected readonly widthPx = computed(() => ({ sm: 104, md: 136, lg: 208, fluid: null })[this.size()]);
 
   protected readonly d = computed(() => {
     const chord = this.chord();

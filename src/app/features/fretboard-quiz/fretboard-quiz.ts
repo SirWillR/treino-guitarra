@@ -15,6 +15,7 @@ import {
 } from '../../core/models/fretboard.model';
 import { NoteName, NOTES } from '../../core/models/note.model';
 import { MusicTheoryService } from '../../core/services/music-theory.service';
+import { mediaQuery } from '../../core/utils/media';
 import { readStored, writeStored } from '../../core/utils/storage';
 import { Fretboard } from '../../shared/fretboard/fretboard';
 import { NotePicker } from '../../shared/note-picker/note-picker';
@@ -68,12 +69,12 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Fretboard, NotePicker],
   template: `
-    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <header class="mb-5 flex flex-wrap items-end justify-between gap-4 sm:mb-6">
       <div>
         <h1 class="text-2xl font-bold text-white">Braço & Quiz</h1>
         <p class="mt-1 text-sm text-slate-400">Memorize onde cada nota mora no braço.</p>
       </div>
-      <div class="flex gap-2" role="tablist">
+      <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto" role="tablist">
         <button type="button" class="chip" [class.chip-active]="mode() === 'map'" (click)="mode.set('map')">
           Mapa Livre
         </button>
@@ -101,28 +102,36 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
         <app-fretboard [markers]="mapMarkers()" [interactive]="true" (positionClick)="selectAt($event)" />
       </section>
     } @else {
-      <section class="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <div class="panel">
-          <div class="panel-title">Acertos</div>
-          <div class="text-3xl font-bold text-white tabular-nums">{{ correct() }}<span class="text-lg text-slate-500">/{{ total() }}</span></div>
+      <!-- One compact row on phones so the neck and the answers stay close to the top. -->
+      <section class="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-3">
+        <div class="panel px-2 py-3 text-center sm:p-5 sm:text-left">
+          <div class="panel-title mb-1 truncate text-[10px] tracking-wide sm:mb-3 sm:text-xs sm:tracking-widest">Acertos</div>
+          <div class="text-xl font-bold text-white tabular-nums sm:text-3xl">{{ correct() }}<span class="text-sm text-slate-500 sm:text-lg">/{{ total() }}</span></div>
         </div>
-        <div class="panel">
-          <div class="panel-title">Precisão</div>
-          <div class="text-3xl font-bold text-white tabular-nums">{{ accuracy() }}%</div>
+        <div class="panel px-2 py-3 text-center sm:p-5 sm:text-left">
+          <div class="panel-title mb-1 truncate text-[10px] tracking-wide sm:mb-3 sm:text-xs sm:tracking-widest">Precisão</div>
+          <div class="text-xl font-bold text-white tabular-nums sm:text-3xl">{{ accuracy() }}%</div>
         </div>
-        <div class="panel">
-          <div class="panel-title">Sequência</div>
-          <div class="text-3xl font-bold text-amber-300 tabular-nums">🔥 {{ streak() }}</div>
+        <div class="panel px-2 py-3 text-center sm:p-5 sm:text-left">
+          <div class="panel-title mb-1 truncate text-[10px] tracking-wide sm:mb-3 sm:text-xs sm:tracking-widest">Sequência</div>
+          <div class="text-xl font-bold text-amber-300 tabular-nums sm:text-3xl">🔥{{ streak() }}</div>
         </div>
-        <div class="panel">
-          <div class="panel-title">Recorde</div>
-          <div class="text-3xl font-bold text-white tabular-nums">{{ bestStreak() }}</div>
+        <div class="panel px-2 py-3 text-center sm:p-5 sm:text-left">
+          <div class="panel-title mb-1 truncate text-[10px] tracking-wide sm:mb-3 sm:text-xs sm:tracking-widest">Recorde</div>
+          <div class="text-xl font-bold text-white tabular-nums sm:text-3xl">{{ bestStreak() }}</div>
         </div>
       </section>
 
-      <section class="panel mb-5">
-        <h2 class="panel-title">Modo do quiz</h2>
-        <p class="mb-4 text-sm text-slate-400">
+      <!-- Collapsed by default on phones: the filters are set once, the quiz is played many times. -->
+      <details class="panel group mb-4 sm:mb-5" [open]="wideScreen()">
+        <summary class="flex cursor-pointer list-none flex-wrap items-center gap-x-2 [&::-webkit-details-marker]:hidden">
+          <h2 class="panel-title mb-0">Modo do quiz</h2>
+          <span class="ml-auto text-xs text-slate-500 transition-transform group-open:rotate-90" aria-hidden="true">▶</span>
+          <span class="mt-1 w-full truncate text-sm text-slate-300 group-open:hidden">
+            {{ summary() }} · <strong class="text-slate-100 tabular-nums">{{ totalPositions() }}</strong> casas
+          </span>
+        </summary>
+        <p class="mt-3 mb-4 text-sm text-slate-400">
           Combine um filtro de cada linha: as perguntas saem só das casas que passam em todos.
         </p>
 
@@ -164,9 +173,9 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
           <strong class="text-amber-300">Agora:</strong> {{ summary() }} —
           <strong class="text-slate-100 tabular-nums">{{ totalPositions() }}</strong> casas.
         </p>
-      </section>
+      </details>
 
-      <section class="panel mb-5">
+      <section class="panel mb-4 sm:mb-5">
         <app-fretboard [frets]="quizMaxFret" [markers]="quizMarkers()" [highlight]="answer() ? null : target()" />
         <p class="mt-3 text-sm text-slate-400">
           <strong class="text-slate-100 tabular-nums">{{ foundInScope() }}</strong> de {{ totalPositions() }} casas
@@ -177,9 +186,12 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
         </p>
       </section>
 
-      <section class="panel">
-        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 class="text-lg font-semibold text-white" aria-live="polite">
+      <!-- Phones: pinned above the tab bar, so the question and the answers stay on screen with the neck. -->
+      <section
+        class="panel sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 bg-slate-900 shadow-[0_-12px_24px_-8px] shadow-black/70 lg:static lg:bg-slate-900/60 lg:shadow-none"
+      >
+        <div class="mb-3 flex items-center justify-between gap-3 sm:mb-4">
+          <h2 class="text-base font-semibold text-white sm:text-lg" aria-live="polite">
             @if (answer(); as a) {
               @if (a.correct) {
                 <span class="text-emerald-400">✓ Isso! É {{ a.expected }}.</span>
@@ -191,14 +203,14 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
               {{ target().fret === 0 ? 'solta' : 'casa ' + target().fret }}?
             }
           </h2>
-          <button type="button" class="btn-ghost" (click)="reset()">Zerar</button>
+          <button type="button" class="btn-ghost shrink-0" (click)="reset()">Zerar</button>
         </div>
 
-        <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-12">
+        <div class="grid grid-cols-6 gap-1.5 sm:gap-2 lg:grid-cols-12">
           @for (note of options(); track note.name) {
             <button
               type="button"
-              class="chip py-3 text-base font-bold"
+              class="chip px-1 py-2 text-base font-bold sm:py-3"
               [class]="optionClass(note.name)"
               [disabled]="!!answer()"
               (click)="guess(note.name)"
@@ -215,6 +227,8 @@ export class FretboardQuiz {
   private readonly theory = inject(MusicTheoryService);
 
   protected readonly quizMaxFret = QUIZ_MAX_FRET;
+  /** The quiz filters start expanded only where there is room for them. */
+  protected readonly wideScreen = mediaQuery('(min-width: 640px)');
   protected readonly mode = signal<Mode>('map');
 
   // Free map

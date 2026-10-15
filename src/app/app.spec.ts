@@ -46,4 +46,21 @@ describe('App', () => {
       '3. Progressões Harmônicas',
     ]);
   });
+
+  it('renders the bottom tab bar and opens the lessons sheet from it', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const tabBar = root.querySelectorAll('nav')[1];
+
+    expect(labels(tabBar.querySelectorAll('a'))).toEqual(['🎸 Braço', '🔁 Acordes', '🧩 CAGED', '🔺 Tríades']);
+    const toggle = tabBar.querySelector('button')!;
+    expect(root.querySelector('#lessons-sheet')).toBeNull();
+
+    toggle.click();
+    await fixture.whenStable();
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(root.querySelectorAll('#lessons-sheet a').length).toBe(3);
+  });
 });

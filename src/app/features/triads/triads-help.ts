@@ -65,7 +65,7 @@ import { Fretboard } from '../../shared/fretboard/fretboard';
               <strong>{{ item.name }}</strong> — da corda grave para a aguda:
               <span class="font-mono text-amber-300">{{ item.formula }}</span>
             </p>
-            <app-fretboard [markers]="item.markers" [strings]="[1, 2, 3]" [frets]="12" />
+            <app-fretboard [markers]="item.markers" [strings]="[1, 2, 3]" [frets]="12" orientation="horizontal" />
           </div>
         }
         <p class="text-sm text-slate-400">Os três desenhos acima são todos o acorde de C maior, nas cordas 1-2-3.</p>

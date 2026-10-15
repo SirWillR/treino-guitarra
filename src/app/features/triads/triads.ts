@@ -18,14 +18,16 @@ import { TriadsHelp } from './triads-help';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Fretboard, NotePicker, HelpDialog, TriadsHelp],
   template: `
-    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <header class="mb-5 flex items-start justify-between gap-3 sm:mb-6 sm:items-end sm:gap-4">
       <div>
         <h1 class="text-2xl font-bold text-white">Tríades Fechadas</h1>
         <p class="mt-1 text-sm text-slate-400">
           Três notas em três cordas vizinhas. Conecte as inversões subindo pelo braço.
         </p>
       </div>
-      <button type="button" class="btn-ghost" (click)="help.open()">❓ O que é isso?</button>
+      <button type="button" class="btn-ghost shrink-0 px-3 sm:px-4" aria-label="O que é isso?" (click)="help.open()">
+        ❓<span class="hidden sm:inline"> O que é isso?</span>
+      </button>
     </header>
 
     <app-help-dialog #help title="O que são tríades?" firstVisitKey="fht.help.triads">
@@ -46,7 +48,7 @@ import { TriadsHelp } from './triads-help';
       </div>
       <div>
         <h2 class="panel-title">Grupo de cordas</h2>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           @for (set of stringSets; track set) {
             <button type="button" class="chip" [class.chip-active]="stringSet() === set" (click)="setStringSet(set)">
               Cordas {{ set }}
@@ -59,7 +61,7 @@ import { TriadsHelp } from './triads-help';
     <section class="panel mb-5">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 class="text-xl font-bold text-white">
+          <h2 class="text-lg font-bold text-white sm:text-xl">
             {{ chordName() }} <span class="font-normal text-slate-400">· {{ inversionName() }}</span>
           </h2>
           <p class="mt-1 text-sm text-slate-400">
@@ -67,7 +69,7 @@ import { TriadsHelp } from './triads-help';
           </p>
         </div>
 
-        <div class="flex items-center gap-2" aria-label="Notas da corda mais grave para a mais aguda">
+        <div class="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:items-center" aria-label="Notas da corda mais grave para a mais aguda">
           @for (tone of tones(); track tone.string) {
             <div class="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-center">
               <div class="text-[10px] tracking-widest text-slate-500 uppercase">{{ tone.string }}ª corda</div>
@@ -77,8 +79,8 @@ import { TriadsHelp } from './triads-help';
           }
         </div>
 
-        <div class="flex gap-2">
-          <button type="button" class="btn-ghost" (click)="step(-1)">← Anterior</button>
+        <div class="grid w-full grid-cols-[auto_1fr] gap-2 sm:flex sm:w-auto">
+          <button type="button" class="btn-ghost" aria-label="Anterior" (click)="step(-1)">←<span class="hidden sm:inline"> Anterior</span></button>
           <button type="button" class="btn-primary" (click)="step(1)">Próxima Inversão →</button>
         </div>
       </div>

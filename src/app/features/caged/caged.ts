@@ -18,14 +18,16 @@ import { CagedHelp } from './caged-help';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [Fretboard, NotePicker, HelpDialog, CagedHelp],
   template: `
-    <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <header class="mb-5 flex items-start justify-between gap-3 sm:mb-6 sm:items-end sm:gap-4">
       <div>
         <h1 class="text-2xl font-bold text-white">Sistema CAGED</h1>
         <p class="mt-1 text-sm text-slate-400">
           Um mesmo acorde em cinco desenhos ao longo do braço. Ache a tônica e o shape vem junto.
         </p>
       </div>
-      <button type="button" class="btn-ghost" (click)="help.open()">❓ O que é isso?</button>
+      <button type="button" class="btn-ghost shrink-0 px-3 sm:px-4" aria-label="O que é isso?" (click)="help.open()">
+        ❓<span class="hidden sm:inline"> O que é isso?</span>
+      </button>
     </header>
 
     <app-help-dialog #help title="O que é o Sistema CAGED?" firstVisitKey="fht.help.caged">
@@ -46,17 +48,17 @@ import { CagedHelp } from './caged-help';
       </div>
       <div class="lg:col-span-2">
         <h2 class="panel-title">Shape</h2>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="grid grid-cols-5 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
           @for (name of shapeNames; track name) {
-            <button type="button" class="chip min-w-28" [class.chip-active]="shape() === name" (click)="shape.set(name)">
-              Shape de {{ name }}
+            <button type="button" class="chip px-1 sm:min-w-28 sm:px-3" [class.chip-active]="shape() === name" (click)="shape.set(name)">
+              <span class="hidden sm:inline">Shape de </span>{{ name }}
             </button>
           }
-          <label class="ml-auto flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+          <label class="col-span-5 mt-2 flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-300 sm:mt-0 sm:ml-auto sm:min-h-0">
             <input type="checkbox" class="accent-amber-400" [checked]="showAll()" (change)="showAll.set(!showAll())" />
             Mostrar os outros shapes
           </label>
-          <label class="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+          <label class="col-span-5 flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-300 sm:min-h-0">
             <input type="checkbox" class="accent-amber-400" [checked]="showNotes()" (change)="showNotes.set(!showNotes())" />
             Nomes das notas
           </label>
@@ -66,7 +68,7 @@ import { CagedHelp } from './caged-help';
 
     <section class="panel mb-5">
       <div class="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-        <h2 class="text-xl font-bold text-white">
+        <h2 class="text-lg font-bold text-white sm:text-xl">
           {{ chordName() }} <span class="font-normal text-slate-400">· shape de {{ shape() }}</span>
         </h2>
         <p class="text-sm text-slate-300">

@@ -31,10 +31,11 @@ const LAST_START_FRET = 12;
         </p>
       </div>
 
-      <div class="mb-4 flex flex-wrap items-center gap-2">
-        <span class="mr-1 text-sm text-slate-400">Casa do dedo 1:</span>
+      <span class="mb-2 block text-sm text-slate-400 sm:hidden">Casa do dedo 1:</span>
+      <div class="mb-4 grid grid-cols-6 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
+        <span class="mr-1 hidden text-sm text-slate-400 sm:inline">Casa do dedo 1:</span>
         @for (fret of startFrets; track fret) {
-          <button type="button" class="chip min-w-10" [class.chip-active]="startFret() === fret" (click)="startFret.set(fret)">
+          <button type="button" class="chip px-1 sm:min-w-10 sm:px-3" [class.chip-active]="startFret() === fret" (click)="startFret.set(fret)">
             {{ fret }}
           </button>
         }

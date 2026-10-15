@@ -14,7 +14,7 @@ type ScaleMode = 'major' | 'teacher';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ScaleExercise, ExercisePlayer, NotePicker, PracticeTips],
   template: `
-    <div class="mb-5 flex flex-wrap gap-2">
+    <div class="mb-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
       <button type="button" class="chip" [class.chip-active]="mode() === 'teacher'" (click)="mode.set('teacher')">
         Padrão da aula (3 cordas)
       </button>
@@ -43,7 +43,7 @@ type ScaleMode = 'major' | 'teacher';
               {{ $index + 1 }}ª <span class="text-xs opacity-70">· casas {{ position.lowestFret }}–{{ position.highestFret }}</span>
             </button>
           }
-          <button type="button" class="btn-primary ml-auto" (click)="nextPosition()">Próxima posição →</button>
+          <button type="button" class="btn-primary w-full sm:ml-auto sm:w-auto" (click)="nextPosition()">Próxima posição →</button>
         </div>
 
         <app-scale-exercise [pattern]="position().steps" [startFret]="0" [activeIndex]="activeIndex()" />
@@ -87,9 +87,9 @@ type ScaleMode = 'major' | 'teacher';
 
         <app-scale-exercise [pattern]="teacherPattern" [startFret]="startFret()" [activeIndex]="activeIndex()" />
 
-        <div class="mt-4 grid gap-3 sm:grid-cols-3">
+        <div class="mt-4 grid grid-cols-3 gap-2 sm:gap-3">
           @for (row of rows(); track row.string) {
-            <div class="rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm">
+            <div class="rounded-xl border border-slate-800 bg-slate-900 px-3 py-3 text-sm sm:px-4">
               <div class="font-semibold text-slate-100">Corda {{ row.string }}</div>
               <div class="text-slate-300">casas {{ row.frets }}</div>
               <div class="text-xs text-slate-500">dedos {{ row.fingers }}</div>

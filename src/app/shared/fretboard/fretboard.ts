@@ -1,4 +1,14 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import {
   ALL_STRINGS,
   FretMarker,
@@ -6,16 +16,40 @@ import {
   GuitarString,
 } from '../../core/models/fretboard.model';
 import { MusicTheoryService } from '../../core/services/music-theory.service';
+import { mediaQuery } from '../../core/utils/media';
 
-const WIDTH = 1000;
-const NUT_X = 64;
-const RIGHT_X = 988;
-const OPEN_X = 40;
-const TOP_Y = 26;
-const STRING_GAP = 34;
 const SINGLE_INLAYS = [3, 5, 7, 9, 15];
 const DOUBLE_INLAYS = [12];
 const DEFAULT_COLOR = '#38bdf8';
+/** Below Tailwind's `sm` breakpoint the neck is drawn standing up so it fits a phone held upright. */
+const NARROW_SCREEN = '(max-width: 639px)';
+
+export type FretboardOrientation = 'auto' | 'horizontal' | 'vertical';
+
+/**
+ * Geometry along the neck ("along": nut → body) and across it ("across": one string to the next).
+ * Horizontal maps along → x and across → y; vertical maps along → y and across → x.
+ */
+interface Layout {
+  /** Where the nut sits on the along axis. */
+  nut: number;
+  /** Centre of the open-string dots, before the nut. */
+  open: number;
+  /** Along position of the string numbers. */
+  stringLabel: number;
+  /** Across position of the first string drawn. */
+  first: number;
+  gap: number;
+  /** Size multiplier for dots, so they stay finger-sized on the wider vertical string gap. */
+  dotScale: number;
+}
+
+const HORIZONTAL: Layout = { nut: 64, open: 40, stringLabel: 10, first: 26, gap: 34, dotScale: 1 };
+const VERTICAL: Layout = { nut: 76, open: 44, stringLabel: 18, first: 36, gap: 48, dotScale: 1.25 };
+/** Total along length of the horizontal neck, whatever the number of frets. */
+const HORIZONTAL_LENGTH = 988;
+/** Length of each fret on the vertical neck, which grows downwards with the number of frets. */
+const VERTICAL_FRET = 46;
 
 interface Dot {
   key: string;
@@ -32,18 +66,20 @@ interface Dot {
   selector: 'app-fretboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="overflow-x-auto">
+    <div [class.overflow-x-auto]="!vertical()">
       <svg
-        class="h-auto w-full min-w-[640px] select-none"
+        class="mx-auto block h-auto w-full select-none"
         role="img"
-        [attr.viewBox]="'0 0 ' + width + ' ' + g().height"
+        [style.min-width.px]="vertical() ? null : minWidth()"
+        [style.max-width.px]="vertical() ? g().width * 1.1 : null"
+        [attr.viewBox]="'0 0 ' + g().width + ' ' + g().height"
         [attr.aria-label]="ariaLabel()"
       >
         <rect
-          [attr.x]="nutX"
-          [attr.y]="g().boardTop"
-          [attr.width]="g().boardWidth"
-          [attr.height]="g().boardHeight"
+          [attr.x]="g().board.x"
+          [attr.y]="g().board.y"
+          [attr.width]="g().board.width"
+          [attr.height]="g().board.height"
           rx="4"
           fill="#1c1410"
         />
@@ -54,19 +90,19 @@ interface Dot {
 
         @for (fret of g().fretLines; track fret.fret) {
           <line
-            [attr.x1]="fret.x"
-            [attr.x2]="fret.x"
-            [attr.y1]="g().boardTop"
-            [attr.y2]="g().boardTop + g().boardHeight"
+            [attr.x1]="fret.x1"
+            [attr.x2]="fret.x2"
+            [attr.y1]="fret.y1"
+            [attr.y2]="fret.y2"
             stroke="#94a3b8"
             stroke-width="2"
             opacity="0.6"
           />
           <text
-            [attr.x]="fret.labelX"
-            [attr.y]="g().height - 6"
+            [attr.x]="fret.label.x"
+            [attr.y]="fret.label.y"
             text-anchor="middle"
-            font-size="12"
+            [attr.font-size]="labelSize()"
             [attr.fill]="fret.marked ? '#cbd5e1' : '#64748b'"
             [attr.font-weight]="fret.marked ? 700 : 400"
           >
@@ -75,23 +111,29 @@ interface Dot {
         }
 
         <rect
-          [attr.x]="nutX - 5"
-          [attr.y]="g().boardTop"
-          width="6"
-          [attr.height]="g().boardHeight"
+          [attr.x]="g().nut.x"
+          [attr.y]="g().nut.y"
+          [attr.width]="g().nut.width"
+          [attr.height]="g().nut.height"
           fill="#e2e8f0"
         />
 
         @for (line of g().strings; track line.string) {
           <line
-            [attr.x1]="nutX"
-            [attr.x2]="rightX"
-            [attr.y1]="line.y"
-            [attr.y2]="line.y"
+            [attr.x1]="line.x1"
+            [attr.x2]="line.x2"
+            [attr.y1]="line.y1"
+            [attr.y2]="line.y2"
             stroke="#cbd5e1"
             [attr.stroke-width]="line.thickness"
           />
-          <text [attr.x]="10" [attr.y]="line.y + 4" font-size="12" fill="#64748b">
+          <text
+            [attr.x]="line.label.x"
+            [attr.y]="line.label.y"
+            [attr.text-anchor]="vertical() ? 'middle' : 'start'"
+            [attr.font-size]="labelSize()"
+            fill="#64748b"
+          >
             {{ line.string }}
           </text>
         }
@@ -103,7 +145,7 @@ interface Dot {
               [attr.x]="cell.x"
               [attr.y]="cell.y"
               [attr.width]="cell.width"
-              [attr.height]="stringGap"
+              [attr.height]="cell.height"
               rx="6"
               (click)="positionClick.emit(cell.position)"
             />
@@ -113,7 +155,7 @@ interface Dot {
         @for (dot of dots(); track dot.key) {
           <g
             class="pointer-events-none"
-            [attr.transform]="'translate(' + dot.x + ' ' + dot.y + ')'"
+            [attr.transform]="'translate(' + dot.x + ' ' + dot.y + ') scale(' + layout().dotScale + ')'"
             [attr.opacity]="dot.ghost ? 0.5 : 1"
           >
             @if (dot.active) {
@@ -138,7 +180,11 @@ interface Dot {
         }
 
         @if (target(); as t) {
-          <g class="pointer-events-none" [attr.transform]="'translate(' + t.x + ' ' + t.y + ')'">
+          <g
+            #target
+            class="pointer-events-none"
+            [attr.transform]="'translate(' + t.x + ' ' + t.y + ') scale(' + layout().dotScale + ')'"
+          >
             <circle
               class="origin-center animate-ping [transform-box:fill-box]"
               r="13"
@@ -156,6 +202,7 @@ interface Dot {
 })
 export class Fretboard {
   private readonly theory = inject(MusicTheoryService);
+  private readonly narrowScreen = mediaQuery(NARROW_SCREEN);
 
   /** Notes to highlight, each with its own colour and label. */
   readonly markers = input<readonly FretMarker[]>([]);
@@ -167,60 +214,102 @@ export class Fretboard {
   readonly interactive = input(false);
   /** Position shown as a pulsing "?" (the quiz target). */
   readonly highlight = input<FretPosition | null>(null);
+  /** "auto" stands the neck up on narrow screens and lays it down otherwise. */
+  readonly orientation = input<FretboardOrientation>('auto');
 
   readonly positionClick = output<FretPosition>();
 
-  protected readonly width = WIDTH;
-  protected readonly nutX = NUT_X;
-  protected readonly rightX = RIGHT_X;
-  protected readonly stringGap = STRING_GAP;
+  private readonly targetRef = viewChild<ElementRef<SVGGElement>>('target');
 
-  private readonly orderedStrings = computed(() => [...this.strings()].sort((a, b) => a - b));
-  private readonly fretWidth = computed(() => (RIGHT_X - NUT_X) / this.frets());
+  protected readonly vertical = computed(() =>
+    this.orientation() === 'auto' ? this.narrowScreen() : this.orientation() === 'vertical',
+  );
+  protected readonly layout = computed(() => (this.vertical() ? VERTICAL : HORIZONTAL));
+  protected readonly labelSize = computed(() => (this.vertical() ? 13 : 12));
+  /** Horizontal necks scroll sideways below this width instead of shrinking the dots away. */
+  protected readonly minWidth = computed(() => Math.min(640, 80 + this.frets() * 40));
+
+  /**
+   * Horizontal: highest string on top, as in tablature.
+   * Vertical: low E on the left, as in a chord diagram.
+   */
+  private readonly orderedStrings = computed(() =>
+    [...this.strings()].sort((a, b) => (this.vertical() ? b - a : a - b)),
+  );
+  private readonly end = computed(() =>
+    this.vertical() ? VERTICAL.nut + this.frets() * VERTICAL_FRET : HORIZONTAL_LENGTH,
+  );
+  private readonly fretLength = computed(() => (this.end() - this.layout().nut) / this.frets());
 
   protected readonly g = computed(() => {
+    const { nut, first, gap, stringLabel } = this.layout();
     const strings = this.orderedStrings();
     const frets = this.frets();
-    const fretWidth = this.fretWidth();
-    const lastY = TOP_Y + (strings.length - 1) * STRING_GAP;
-    const boardTop = TOP_Y - 14;
-    const boardHeight = lastY - TOP_Y + 28;
-    const midY = (TOP_Y + lastY) / 2;
-    const doubleOffset = strings.length > 3 ? STRING_GAP : STRING_GAP / 2;
+    const fretLength = this.fretLength();
+    const end = this.end();
+    const last = first + (strings.length - 1) * gap;
+    const boardStart = first - 14;
+    const boardSize = last - first + 28;
+    const mid = (first + last) / 2;
+    const doubleOffset = strings.length > 3 ? gap : gap / 2;
+    // Fret numbers sit just past the last string.
+    const fretLabelAcross = last + (this.vertical() ? 32 : 34);
+    const acrossSize = last + 40;
+    const alongSize = this.vertical() ? end + 12 : 1000;
 
     const fretNumbers = Array.from({ length: frets }, (_, i) => i + 1);
     const inlays = [
-      ...SINGLE_INLAYS.filter((f) => f <= frets).map((f) => ({ x: this.x(f), y: midY })),
+      ...SINGLE_INLAYS.filter((f) => f <= frets).map((f) => this.pt(this.along(f), mid)),
       ...DOUBLE_INLAYS.filter((f) => f <= frets).flatMap((f) => [
-        { x: this.x(f), y: midY - doubleOffset },
-        { x: this.x(f), y: midY + doubleOffset },
+        this.pt(this.along(f), mid - doubleOffset),
+        this.pt(this.along(f), mid + doubleOffset),
       ]),
     ];
 
     return {
-      height: lastY + 40,
-      boardTop,
-      boardHeight,
-      boardWidth: RIGHT_X - NUT_X,
+      width: this.vertical() ? acrossSize : alongSize,
+      height: this.vertical() ? alongSize : acrossSize,
+      board: this.box(nut, end - nut, boardStart, boardSize),
+      nut: this.box(nut - 5, 6, boardStart, boardSize),
       inlays,
-      fretLines: fretNumbers.map((fret) => ({
-        fret,
-        x: NUT_X + fret * fretWidth,
-        labelX: this.x(fret),
-        marked: SINGLE_INLAYS.includes(fret) || DOUBLE_INLAYS.includes(fret),
-      })),
-      strings: strings.map((string) => ({
-        string,
-        y: this.y(string),
-        thickness: 1 + (string - 1) * 0.45,
-      })),
+      fretLines: fretNumbers.map((fret) => {
+        const along = nut + fret * fretLength;
+        const from = this.pt(along, boardStart);
+        const to = this.pt(along, boardStart + boardSize);
+        const label = this.pt(this.along(fret), fretLabelAcross);
+        return {
+          fret,
+          x1: from.x,
+          y1: from.y,
+          x2: to.x,
+          y2: to.y,
+          // Text is anchored on its baseline; nudge it down to centre it on the fret.
+          label: this.vertical() ? { x: label.x, y: label.y + 4 } : label,
+          marked: SINGLE_INLAYS.includes(fret) || DOUBLE_INLAYS.includes(fret),
+        };
+      }),
+      strings: strings.map((string) => {
+        const across = this.across(string);
+        const from = this.pt(nut, across);
+        const to = this.pt(end, across);
+        const label = this.pt(stringLabel, across);
+        return {
+          string,
+          x1: from.x,
+          y1: from.y,
+          x2: to.x,
+          y2: to.y,
+          label: this.vertical() ? label : { x: label.x, y: label.y + 4 },
+          thickness: 1 + (string - 1) * 0.45,
+        };
+      }),
       cells: strings.flatMap((string) =>
         [0, ...fretNumbers].map((fret) => ({
           key: `${string}:${fret}`,
           position: { string, fret } satisfies FretPosition,
-          x: fret === 0 ? OPEN_X - 18 : NUT_X + (fret - 1) * fretWidth + 2,
-          y: this.y(string) - STRING_GAP / 2,
-          width: fret === 0 ? 36 : fretWidth - 4,
+          ...(fret === 0
+            ? this.box(this.layout().open - 18, 36, this.across(string) - gap / 2, gap)
+            : this.box(nut + (fret - 1) * fretLength + 2, fretLength - 4, this.across(string) - gap / 2, gap)),
         })),
       ),
     };
@@ -233,8 +322,7 @@ export class Fretboard {
         .filter((m) => visible.has(m.string) && m.fret >= 0 && m.fret <= this.frets())
         .map((m) => ({
           key: `${m.string}:${m.fret}`,
-          x: this.x(m.fret),
-          y: this.y(m.string),
+          ...this.pt(this.along(m.fret), this.across(m.string)),
           label: m.label ?? (this.showNoteNames() ? this.theory.noteAt(m.string, m.fret) : ''),
           color: m.color ?? DEFAULT_COLOR,
           isRoot: !!m.isRoot,
@@ -248,18 +336,47 @@ export class Fretboard {
 
   protected readonly target = computed(() => {
     const position = this.highlight();
-    return position ? { x: this.x(position.fret), y: this.y(position.string) } : null;
+    return position ? this.pt(this.along(position.fret), this.across(position.string)) : null;
   });
 
   protected readonly ariaLabel = computed(
     () => `Braço da guitarra, ${this.frets()} trastes, ${this.dots().length} notas destacadas`,
   );
 
-  private x(fret: number): number {
-    return fret === 0 ? OPEN_X : NUT_X + (fret - 0.5) * this.fretWidth();
+  constructor() {
+    // The standing neck is taller than a phone screen and the quiz pins its answers over the bottom
+    // of it: bring the "?" back into the upper part of the screen when it lands out of sight.
+    afterRenderEffect(() => {
+      const target = this.targetRef()?.nativeElement;
+      if (!target || !this.vertical() || !this.highlight()) {
+        return;
+      }
+      const { top, bottom } = target.getBoundingClientRect();
+      if (top < 0 || bottom > window.innerHeight * 0.55) {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    });
   }
 
-  private y(string: GuitarString): number {
-    return TOP_Y + this.orderedStrings().indexOf(string) * STRING_GAP;
+  /** Centre of a fret on the along axis; fret 0 is the open string, before the nut. */
+  private along(fret: number): number {
+    const { nut, open } = this.layout();
+    return fret === 0 ? open : nut + (fret - 0.5) * this.fretLength();
+  }
+
+  private across(string: GuitarString): number {
+    const { first, gap } = this.layout();
+    return first + this.orderedStrings().indexOf(string) * gap;
+  }
+
+  private pt(along: number, across: number): { x: number; y: number } {
+    return this.vertical() ? { x: across, y: along } : { x: along, y: across };
+  }
+
+  private box(along: number, alongSize: number, across: number, acrossSize: number) {
+    const { x, y } = this.pt(along, across);
+    return this.vertical()
+      ? { x, y, width: acrossSize, height: alongSize }
+      : { x, y, width: alongSize, height: acrossSize };
   }
 }

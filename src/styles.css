@@ -12,20 +12,31 @@
 
   body {
     @apply bg-ink text-slate-200 antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* No double-tap zoom delay on anything tappable. */
+  a,
+  button,
+  input,
+  label,
+  summary {
+    touch-action: manipulation;
   }
 }
 
 @layer components {
   .panel {
-    @apply rounded-2xl border border-slate-800 bg-slate-900/60 p-5;
+    @apply rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5;
   }
 
   .panel-title {
     @apply mb-3 text-xs font-semibold tracking-widest text-slate-400 uppercase;
   }
 
+  /* Touch-sized (44px) on phones, compact from `sm` up. */
   .chip {
-    @apply cursor-pointer rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40;
+    @apply min-h-11 cursor-pointer rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-sm font-medium text-slate-300 transition hover:border-slate-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0;
   }
 
   .chip-active {
@@ -33,7 +44,7 @@
   }
 
   .btn-primary {
-    @apply cursor-pointer rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40;
+    @apply min-h-11 cursor-pointer rounded-xl bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0;
   }
 
   /* Long-form text inside the help dialogs. */
@@ -75,6 +86,6 @@
   }
 
   .btn-ghost {
-    @apply cursor-pointer rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40;
+    @apply min-h-11 cursor-pointer rounded-xl border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0;
   }
 }
