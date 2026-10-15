@@ -168,6 +168,12 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
             <button type="button" class="chip" [class.chip-active]="!naturalsOnly()" (click)="setNaturalsOnly(false)">Todas</button>
             <button type="button" class="chip" [class.chip-active]="naturalsOnly()" (click)="setNaturalsOnly(true)">Só naturais</button>
           </div>
+
+          <span class="text-sm font-semibold text-slate-300">Acertos</span>
+          <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-300 sm:min-h-0">
+            <input type="checkbox" class="accent-amber-400" [checked]="showFound()" (change)="showFound.set(!showFound())" />
+            Manter as notas que acertei marcadas no braço
+          </label>
         </div>
 
         <p class="mt-4 rounded-xl border border-slate-800 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
@@ -178,11 +184,7 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
 
       <section class="panel mb-4 sm:mb-5">
         <app-fretboard [frets]="quizMaxFret" [markers]="quizMarkers()" [highlight]="answer() ? null : target()" />
-        <label class="mt-3 flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-300 sm:min-h-0">
-          <input type="checkbox" class="accent-amber-400" [checked]="showFound()" (change)="showFound.set(!showFound())" />
-          Manter as notas que acertei marcadas no braço
-        </label>
-        <p class="mt-2 text-sm text-slate-400">
+        <p class="mt-3 text-sm text-slate-400">
           <strong class="text-slate-100 tabular-nums">{{ foundInScope() }}</strong> de {{ totalPositions() }} casas
           descobertas nesta combinação.
           @if (completedRounds() > 0) {
