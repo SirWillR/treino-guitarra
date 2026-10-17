@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { WakeLockService } from './core/services/wake-lock.service';
 import { LESSONS } from './features/lessons/lessons.registry';
 
 interface NavItem {
@@ -36,6 +37,8 @@ export class App {
   protected readonly lessonsActive = signal(false);
 
   constructor() {
+    inject(WakeLockService).start();
+
     inject(Router)
       .events.pipe(
         filter((event) => event instanceof NavigationEnd),
