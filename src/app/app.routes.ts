@@ -5,35 +5,35 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'braco' },
   {
     path: 'braco',
-    title: 'Braço & Quiz · Fretboard & Harmony Trainer',
+    title: 'Braço & Quiz · Treino de Guitarra',
     loadComponent: () =>
       import('./features/fretboard-quiz/fretboard-quiz').then((m) => m.FretboardQuiz),
   },
   {
     path: 'acordes',
-    title: 'Troca de Acordes · Fretboard & Harmony Trainer',
+    title: 'Troca de Acordes · Treino de Guitarra',
     loadComponent: () =>
       import('./features/chord-trainer/chord-trainer').then((m) => m.ChordTrainer),
   },
   {
     path: 'caged',
-    title: 'Sistema CAGED · Fretboard & Harmony Trainer',
+    title: 'Sistema CAGED · Treino de Guitarra',
     loadComponent: () => import('./features/caged/caged').then((m) => m.Caged),
   },
   {
     path: 'triades',
-    title: 'Tríades · Fretboard & Harmony Trainer',
+    title: 'Tríades · Treino de Guitarra',
     loadComponent: () => import('./features/triads/triads').then((m) => m.Triads),
   },
   {
     path: 'licoes',
-    title: 'Lições da Aula · Fretboard & Harmony Trainer',
+    title: 'Lições da Aula · Treino de Guitarra',
     loadComponent: () => import('./features/lessons/lessons').then((m) => m.Lessons),
     children: [
       { path: '', pathMatch: 'full', redirectTo: LESSONS[0].slug },
       ...LESSONS.map((lesson) => ({
         path: lesson.slug,
-        title: `${lesson.title} · Fretboard & Harmony Trainer`,
+        title: `${lesson.title} · Treino de Guitarra`,
         loadComponent: lesson.loadComponent,
       })),
       { path: '**', redirectTo: LESSONS[0].slug },

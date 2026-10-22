@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "fretboard-harmony-trainer": {
+    "treino-guitarra": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -54,10 +54,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "fretboard-harmony-trainer:build:production"
+              "buildTarget": "treino-guitarra:build:production"
             },
             "development": {
-              "buildTarget": "fretboard-harmony-trainer:build:development"
+              "buildTarget": "treino-guitarra:build:development"
             }
           },
           "defaultConfiguration": "development"

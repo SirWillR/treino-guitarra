@@ -1,4 +1,4 @@
-# Fretboard & Harmony Trainer
+# Treino de Guitarra
 
 App de treino diário de guitarra: memorização das notas do braço, troca de acordes com metrônomo,
 sistema CAGED, tríades fechadas e as lições da aula (digitação e progressões com dicas).
