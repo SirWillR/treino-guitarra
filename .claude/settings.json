@@ -13,7 +13,8 @@
       "Bash(python -)",
       "PowerShell(git add src/app/features/fretboard-quiz/fretboard-quiz.ts)",
       "PowerShell(git add src/app/app.ts src/app/core/services/wake-lock.service.ts)",
-      "PowerShell($env:Path = \"C:\\\\Users\\\\user\\\\.nvm\\\\versions\\\\node\\\\v24.21.0\\\\bin;\" + $env:Path; npx ng build 2>&1 | Select-String -Pattern \"error|complete|Output location\" | Select-Object -First 10; npm test -- --watch=false 2>&1 | Select-String -Pattern \"Tests|failed\" | Select-Object -First 5)"
+      "PowerShell($env:Path = \"C:\\\\Users\\\\user\\\\.nvm\\\\versions\\\\node\\\\v24.21.0\\\\bin;\" + $env:Path; npx ng build 2>&1 | Select-String -Pattern \"error|complete|Output location\" | Select-Object -First 10; npm test -- --watch=false 2>&1 | Select-String -Pattern \"Tests|failed\" | Select-Object -First 5)",
+      "PowerShell($env:Path = \"C:\\\\Users\\\\user\\\\.nvm\\\\versions\\\\node\\\\v24.21.0\\\\bin;\" + $env:Path; Push-Location \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Workspace-treino-guitarra\\\\14bc7767-1b72-4b10-b9a9-b571663ce448\\\\scratchpad\\\\pwa-check\"; node live.mjs 2>&1; Pop-Location)"
     ]
   }
 }
