@@ -1,13 +1,17 @@
 <div class="min-h-screen lg:flex">
   <!-- Phones and tablets: a slim title bar on top; navigation lives in the bottom tab bar. -->
-  <header class="border-b border-slate-800 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 lg:hidden">
+  <header
+    class="border-b border-slate-800 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 lg:hidden"
+  >
     <div class="text-base leading-tight font-bold text-white">
       Treino de <span class="text-amber-400">Guitarra</span>
     </div>
   </header>
 
   <!-- Desktop sidebar. -->
-  <aside class="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-slate-800 bg-ink/95 lg:block">
+  <aside
+    class="sticky top-0 hidden h-screen w-64 shrink-0 overflow-y-auto border-r border-slate-800 bg-ink/95 lg:block"
+  >
     <div class="px-5 pt-7">
       <div class="text-lg leading-tight font-bold text-white">
         Treino de <span class="text-amber-400">Guitarra</span>
@@ -36,7 +40,12 @@
       >
         <span aria-hidden="true">📒</span>
         Lições da Aula
-        <span class="ml-auto pl-2 text-xs transition-transform" [class.rotate-90]="lessonsOpen()" aria-hidden="true">▶</span>
+        <span
+          class="ml-auto pl-2 text-xs transition-transform"
+          [class.rotate-90]="lessonsOpen()"
+          aria-hidden="true"
+          >▶</span
+        >
       </button>
 
       @if (lessonsOpen()) {
@@ -93,14 +102,20 @@
   </nav>
 
   @if (sheetOpen()) {
-    <div class="fixed inset-0 z-20 bg-black/60 lg:hidden" aria-hidden="true" (click)="sheetOpen.set(false)"></div>
+    <div
+      class="fixed inset-0 z-20 bg-black/60 lg:hidden"
+      aria-hidden="true"
+      (click)="sheetOpen.set(false)"
+    ></div>
     <div
       id="lessons-sheet"
       class="fixed inset-x-0 bottom-0 z-25 max-h-[70dvh] overflow-y-auto rounded-t-2xl border-t border-slate-700 bg-slate-900 px-3 pt-4 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:hidden"
       role="dialog"
       aria-label="Lições da Aula"
     >
-      <h2 class="mb-2 px-2 text-xs font-semibold tracking-widest text-slate-400 uppercase">Lições da Aula</h2>
+      <h2 class="mb-2 px-2 text-xs font-semibold tracking-widest text-slate-400 uppercase">
+        Lições da Aula
+      </h2>
       <ul class="flex flex-col gap-1">
         @for (lesson of lessons; track lesson.slug; let i = $index) {
           <li>
@@ -115,6 +130,23 @@
           </li>
         }
       </ul>
+    </div>
+  }
+
+  @if (update.ready()) {
+    <!-- Above the bottom tab bar on phones; bottom-right corner on desktop. -->
+    <div
+      class="fixed inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 flex items-center gap-3 rounded-xl border border-amber-400/40 bg-slate-900 px-4 py-3 text-sm text-slate-200 shadow-lg lg:inset-x-auto lg:right-6 lg:bottom-6"
+      role="status"
+    >
+      Nova versão disponível
+      <button
+        type="button"
+        class="ml-auto cursor-pointer rounded-lg bg-amber-400 px-3 py-1.5 font-semibold text-ink"
+        (click)="update.reload()"
+      >
+        Atualizar
+      </button>
     </div>
   }
 </div>

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { UpdateService } from './core/services/update.service';
 import { WakeLockService } from './core/services/wake-lock.service';
 import { LESSONS } from './features/lessons/lessons.registry';
 
@@ -36,8 +37,11 @@ export class App {
   /** Whether the current page is one of the lessons. */
   protected readonly lessonsActive = signal(false);
 
+  protected readonly update = inject(UpdateService);
+
   constructor() {
     inject(WakeLockService).start();
+    this.update.start();
 
     inject(Router)
       .events.pipe(

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 import { App } from './app';
 
 describe('App', () => {
@@ -9,7 +10,7 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), provideServiceWorker('ngsw-worker.js', { enabled: false })],
     }).compileComponents();
   });
 
@@ -53,7 +54,12 @@ describe('App', () => {
     const root = fixture.nativeElement as HTMLElement;
     const tabBar = root.querySelectorAll('nav')[1];
 
-    expect(labels(tabBar.querySelectorAll('a'))).toEqual(['🎸 Braço', '🔁 Acordes', '🧩 CAGED', '🔺 Tríades']);
+    expect(labels(tabBar.querySelectorAll('a'))).toEqual([
+      '🎸 Braço',
+      '🔁 Acordes',
+      '🧩 CAGED',
+      '🔺 Tríades',
+    ]);
     const toggle = tabBar.querySelector('button')!;
     expect(root.querySelector('#lessons-sheet')).toBeNull();
 

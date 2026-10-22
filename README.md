@@ -23,6 +23,10 @@ Outros comandos: `npm test` (testes unitários, Vitest) e `npm run build` (build
 O app está publicado em <https://sirwillr.github.io/treino-guitarra/>. Cada `git push` na `main` roda os
 testes e republica o site pelo workflow `.github/workflows/deploy.yml` (GitHub Pages).
 
+É um PWA: dá para instalar na tela inicial e ele funciona offline. O service worker
+(`ngsw-config.json`) só entra no build de produção; depois de um deploy, o app avisa que há uma
+versão nova e oferece o botão **Atualizar**. O ícone fica em `public/icons/icon.svg`.
+
 ## Módulos
 
 | Aba | Rota | O que faz |

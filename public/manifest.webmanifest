@@ -1,0 +1,17 @@
+{
+  "name": "Treino de Guitarra",
+  "short_name": "Treino",
+  "description": "Treino diário de guitarra: notas do braço, troca de acordes, CAGED, tríades e lições.",
+  "lang": "pt-BR",
+  "display": "standalone",
+  "orientation": "any",
+  "scope": "./",
+  "start_url": "./",
+  "background_color": "#070b14",
+  "theme_color": "#070b14",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
