@@ -1,7 +1,15 @@
 import { Injectable } from '@angular/core';
 import { CAGED_SHAPES } from '../data/caged-shapes.data';
 import { MAJOR_SCALE_POSITIONS } from '../data/scale-positions.data';
-import { CagedAnchor, CagedShape, CagedShapeName } from '../models/caged.model';
+import {
+  CAGED_SHAPE_NAMES,
+  CagedAnchor,
+  CagedInstance,
+  CagedNeckStop,
+  CagedShape,
+  CagedShapeName,
+  VoicingStyle,
+} from '../models/caged.model';
 import { Chord, Finger } from '../models/chord.model';
 import { ScaleExerciseStep, ScalePosition } from '../models/lesson.model';
 import { ALL_STRINGS, FretMarker, FretPosition, GuitarString } from '../models/fretboard.model';
@@ -164,10 +172,86 @@ export class MusicTheoryService {
   }
 
   cagedVoicing(root: NoteName, quality: TriadQuality, shapeName: CagedShapeName): FretMarker[] {
+    const { baseFret } = this.cagedAnchor(root, quality, shapeName);
+    return this.voicingAt(root, this.cagedShape(shapeName, quality), baseFret);
+  }
+
+  /**
+   * Every place the shape fits on the neck up to `maxFret`: the anchor found by `cagedAnchor` and,
+   * when the whole shape still fits, the same shape an octave higher.
+   */
+  cagedVoicings(
+    root: NoteName,
+    quality: TriadQuality,
+    shapeName: CagedShapeName,
+    maxFret = MAX_FRET,
+  ): CagedInstance[] {
     const shape = this.cagedShape(shapeName, quality);
     const { baseFret } = this.cagedAnchor(root, quality, shapeName);
-    const markers: FretMarker[] = [];
+    const reach = Math.max(...shape.offsets.map((offset) => offset ?? 0));
 
+    return [baseFret, baseFret + 12]
+      .filter((base) => base + reach <= maxFret)
+      .map((base) => ({
+        baseFret: base,
+        anchor: { string: shape.rootString, fret: base + shape.rootOffset },
+        markers: this.voicingAt(root, shape, base),
+      }));
+  }
+
+  /**
+   * The five shapes of a chord in the order they appear going up the neck. It is always the
+   * C-A-G-E-D cycle, starting from whichever shape lands closest to the nut.
+   */
+  cagedNeckOrder(root: NoteName, quality: TriadQuality): CagedNeckStop[] {
+    return CAGED_SHAPE_NAMES.map((shape) => {
+      const frets = this.cagedVoicing(root, quality, shape).map((m) => m.fret);
+      return {
+        shape,
+        baseFret: this.cagedAnchor(root, quality, shape).baseFret,
+        lowestFret: Math.min(...frets),
+        highestFret: Math.max(...frets),
+      };
+    }).sort((a, b) => a.baseFret - b.baseFret);
+  }
+
+  /**
+   * The same voicing played in a style: the notes left out stay on the neck as ghosts.
+   * - rock: the three lowest strings without the third (power chord; works on the E, A and D shapes)
+   * - groove: only the four highest strings
+   * - worship: the lowest root plus the highest third ("tônica e terça")
+   */
+  reduceVoicing(root: NoteName, markers: readonly FretMarker[], style: VoicingStyle): FretMarker[] {
+    if (style === 'full') {
+      return [...markers];
+    }
+    const lowToHigh = [...markers].sort((a, b) => b.string - a.string);
+    const intervalAt = (m: FretMarker) => this.intervalOf(root, this.noteAt(m.string, m.fret));
+    const isThird = (m: FretMarker) => {
+      const interval = intervalAt(m);
+      return interval === '3' || interval === 'b3';
+    };
+
+    let played: FretMarker[];
+    switch (style) {
+      case 'rock':
+        played = lowToHigh.slice(0, 3).filter((m) => !isThird(m));
+        break;
+      case 'groove':
+        played = lowToHigh.filter((m) => m.string <= 4);
+        break;
+      case 'worship': {
+        const bass = lowToHigh.find((m) => intervalAt(m) === 'R');
+        const third = [...lowToHigh].reverse().find((m) => m.string <= 3 && isThird(m));
+        played = [bass, third].filter((m): m is FretMarker => !!m);
+        break;
+      }
+    }
+    return lowToHigh.map((m) => (played.includes(m) ? m : { ...m, ghost: true }));
+  }
+
+  private voicingAt(root: NoteName, shape: CagedShape, baseFret: number): FretMarker[] {
+    const markers: FretMarker[] = [];
     shape.offsets.forEach((offset, index) => {
       if (offset === null) {
         return;

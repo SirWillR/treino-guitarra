@@ -20,7 +20,7 @@ interface NavItem {
   selector: 'app-root',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
-  host: { '(document:keydown.escape)': 'sheetOpen.set(false)' },
+  host: { '(document:keydown.escape)': 'menuOpen.set(false)' },
 })
 export class App {
   protected readonly navItems: readonly NavItem[] = [
@@ -33,10 +33,15 @@ export class App {
 
   /** Whether the "Lições da Aula" submenu is expanded (desktop sidebar). */
   protected readonly lessonsOpen = signal(false);
-  /** Whether the lessons bottom sheet is open (phones and tablets). */
-  protected readonly sheetOpen = signal(false);
+  /**
+   * Whether the menu drawer is open (phones and tablets). The tab bar only holds the quick links;
+   * every page, quick or not, is listed in the drawer.
+   */
+  protected readonly menuOpen = signal(false);
   /** Whether the current page is one of the lessons. */
   protected readonly lessonsActive = signal(false);
+  /** Whether the current page has no tab in the bottom bar, so the Menu tab lights up instead. */
+  protected readonly offBar = signal(false);
 
   protected readonly update = inject(UpdateService);
   protected readonly timer = inject(PracticeTimerService);
@@ -57,7 +62,9 @@ export class App {
         const inLessons = event.urlAfterRedirects.startsWith('/licoes');
         this.onRoutine.set(event.urlAfterRedirects.startsWith('/treino'));
         this.lessonsActive.set(inLessons);
-        this.sheetOpen.set(false);
+        const url = event.urlAfterRedirects;
+        this.offBar.set(!this.navItems.some((item) => url.startsWith(item.path)));
+        this.menuOpen.set(false);
         // Landing on a lesson reveals the submenu so the current lesson is always visible.
         if (inLessons) {
           this.lessonsOpen.set(true);

@@ -49,7 +49,7 @@ describe('App', () => {
     ]);
   });
 
-  it('renders the bottom tab bar and opens the lessons sheet from it', async () => {
+  it('renders the quick links in the bottom tab bar and opens the menu drawer from it', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const root = fixture.nativeElement as HTMLElement;
@@ -62,12 +62,24 @@ describe('App', () => {
       '🧩 CAGED',
     ]);
     const toggle = tabBar.querySelector('button')!;
-    expect(root.querySelector('#lessons-sheet')).toBeNull();
+    expect(toggle.textContent).toContain('Menu');
+    expect(root.querySelector('#mobile-menu')).toBeNull();
 
     toggle.click();
     await fixture.whenStable();
 
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(root.querySelectorAll('#lessons-sheet a').length).toBe(4);
+    const menu = root.querySelector('#mobile-menu')!;
+    expect(labels(menu.querySelectorAll('nav a'))).toEqual([
+      '⏱️ Treino Diário',
+      '🎸 Braço & Quiz',
+      '🔁 Troca de Acordes',
+      '🧩 Sistema CAGED',
+    ]);
+    expect(menu.querySelectorAll('ul a').length).toBe(4);
+
+    (menu.querySelector('button[aria-label="Fechar menu"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(root.querySelector('#mobile-menu')).toBeNull();
   });
 });

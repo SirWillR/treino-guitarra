@@ -1,5 +1,5 @@
 <div class="min-h-screen lg:flex">
-  <!-- Phones and tablets: a slim title bar on top; navigation lives in the bottom tab bar. -->
+  <!-- Phones and tablets: a slim title bar on top; the quick links live in the bottom tab bar, the rest in the menu drawer. -->
   <header
     class="border-b border-slate-800 px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 lg:hidden"
   >
@@ -90,31 +90,56 @@
       <button
         type="button"
         class="flex min-h-14 cursor-pointer flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-medium"
-        [class]="lessonsActive() || sheetOpen() ? 'text-amber-300' : 'text-slate-400'"
-        aria-controls="lessons-sheet"
-        [attr.aria-expanded]="sheetOpen()"
-        (click)="sheetOpen.set(!sheetOpen())"
+        [class]="offBar() || menuOpen() ? 'text-amber-300' : 'text-slate-400'"
+        aria-controls="mobile-menu"
+        [attr.aria-expanded]="menuOpen()"
+        (click)="menuOpen.set(!menuOpen())"
       >
-        <span class="text-xl leading-none" aria-hidden="true">📒</span>
-        Lições
+        <span class="text-xl leading-none" aria-hidden="true">☰</span>
+        Menu
       </button>
     </div>
   </nav>
 
-  @if (sheetOpen()) {
+  @if (menuOpen()) {
+    <!-- Phones and tablets: everything that does not fit in the tab bar lives in this drawer. -->
+    <div class="fixed inset-0 z-40 bg-black/60 lg:hidden" aria-hidden="true" (click)="menuOpen.set(false)"></div>
     <div
-      class="fixed inset-0 z-20 bg-black/60 lg:hidden"
-      aria-hidden="true"
-      (click)="sheetOpen.set(false)"
-    ></div>
-    <div
-      id="lessons-sheet"
-      class="fixed inset-x-0 bottom-0 z-25 max-h-[70dvh] overflow-y-auto rounded-t-2xl border-t border-slate-700 bg-slate-900 px-3 pt-4 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:hidden"
+      id="mobile-menu"
+      class="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto border-r border-slate-700 bg-slate-900 px-3 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] lg:hidden"
       role="dialog"
-      aria-label="Lições da Aula"
+      aria-modal="true"
+      aria-label="Menu"
     >
-      <h2 class="mb-2 px-2 text-xs font-semibold tracking-widest text-slate-400 uppercase">
-        Lições da Aula
+      <div class="mb-3 flex items-center justify-between px-2">
+        <div class="text-base leading-tight font-bold text-white">
+          Treino de <span class="text-amber-400">Guitarra</span>
+        </div>
+        <button
+          type="button"
+          class="flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-lg text-slate-400 hover:text-white"
+          aria-label="Fechar menu"
+          (click)="menuOpen.set(false)"
+        >
+          ✕
+        </button>
+      </div>
+
+      <nav class="flex flex-col gap-1" aria-label="Módulos">
+        @for (item of navItems; track item.path) {
+          <a
+            class="flex min-h-12 items-center gap-3 rounded-xl border border-transparent px-3 text-base text-slate-300"
+            routerLinkActive="border-amber-400/40! bg-amber-400/10! text-amber-300!"
+            [routerLink]="item.path"
+          >
+            <span aria-hidden="true">{{ item.icon }}</span>
+            {{ item.label }}
+          </a>
+        }
+      </nav>
+
+      <h2 class="mt-5 mb-2 px-2 text-xs font-semibold tracking-widest text-slate-400 uppercase">
+        📒 Lições da Aula
       </h2>
       <ul class="flex flex-col gap-1">
         @for (lesson of lessons; track lesson.slug; let i = $index) {

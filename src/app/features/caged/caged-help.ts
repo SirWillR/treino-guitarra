@@ -62,6 +62,39 @@ import { Fretboard } from '../../shared/fretboard/fretboard';
     </section>
 
     <section>
+      <h3>Dica para memorizar: "CA, GE"</h3>
+      <p>
+        Três shapes já dizem a corda da tônica no próprio nome: o de <strong>A</strong> na corda Lá, o de
+        <strong>E</strong> na corda Mi e o de <strong>D</strong> na corda Ré. Para os outros dois, pense em
+        <strong>"CA, GE"</strong>: o <strong>C</strong> anda junto com o <strong>A</strong> (5ª corda) e o
+        <strong>G</strong> anda junto com o <strong>E</strong> (6ª corda).
+      </p>
+    </section>
+
+    <section>
+      <h3>A ordem C → A → G → E → D</h3>
+      <p>
+        Subindo o braço, os shapes de um mesmo acorde aparecem sempre nessa ordem, e depois do D volta o C.
+        Um shape <strong>começa onde o anterior termina</strong>: eles se encaixam como blocos. Se você começar
+        pelo D, a sequência é D, C, A, G, E.
+      </p>
+    </section>
+
+    <section>
+      <h3>Mesmo shape, outro estilo</h3>
+      <p>Não precisa tocar sempre o acorde inteiro. Tocando só uma parte do shape, ele muda de cara:</p>
+      <ul>
+        <li><strong>Rock</strong>: só as 3 cordas graves, sem a terça (power chord). Funciona nos shapes de E, A e D.</li>
+        <li><strong>Groove</strong>: só as 4 cordas agudas, um acorde pequeno e leve, bom para funk, pop e gospel.</li>
+        <li><strong>Worship</strong>: a tônica no grave e a terça no agudo ("tônica e terça").</li>
+      </ul>
+      <p>
+        E ninguém é obrigado a usar todos os shapes. Se um fica apertado ou difícil (o de G inteiro, por exemplo),
+        toque o mesmo acorde com o shape vizinho.
+      </p>
+    </section>
+
+    <section>
       <h3>Como ler as bolinhas</h3>
       <p>
         Um acorde maior ou menor tem só <strong>3 notas diferentes</strong>, que se repetem pelas cordas. Na
@@ -80,12 +113,14 @@ import { Fretboard } from '../../shared/fretboard/fretboard';
 
     <section>
       <h3>Como usar esta tela</h3>
+      <p>A tela tem dois modos: <strong>Explorar</strong> e <strong>Quiz da Tônica</strong>.</p>
       <ol>
-        <li>Escolha a <strong>tonalidade</strong> (comece por C) e deixe em <strong>Maior</strong>.</li>
+        <li>Em <strong>Explorar</strong>, escolha a <strong>tonalidade</strong> (comece por C) e deixe em <strong>Maior</strong>.</li>
         <li>Clique em <strong>Shape de C</strong>: é o C aberto de sempre.</li>
-        <li>Clique em <strong>Shape de A</strong>: o mesmo acorde C, agora com pestana na casa 3.</li>
-        <li>Continue por G, E e D. Subindo o braço, os shapes aparecem sempre na ordem C-A-G-E-D.</li>
+        <li>Em <strong>Percorrer o braço</strong>, use ▶ para subir pelos shapes A, G, E e D. Ligue o metrônomo para trocar sozinho.</li>
+        <li>Em <strong>Como tocar</strong>, veja o mesmo shape no estilo rock, groove ou worship.</li>
         <li>Ligue <strong>Mostrar os outros shapes</strong> para ver como um desenho encosta no outro.</li>
+        <li>No <strong>Quiz da Tônica</strong>, o app pede um acorde e um shape e você toca no braço onde fica a tônica.</li>
       </ol>
     </section>
 

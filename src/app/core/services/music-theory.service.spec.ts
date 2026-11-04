@@ -170,4 +170,44 @@ describe('MusicTheoryService', () => {
     ]);
     expect(sequence('1324').slice(0, 4)).toEqual(['1@6', '3@6', '2@6', '4@6']);
   });
+
+  it('finds every place a CAGED shape fits, including an octave up', () => {
+    const cShape = theory.cagedVoicings('C', 'major', 'C');
+    expect(cShape.map((i) => i.baseFret)).toEqual([0, 12]);
+    expect(cShape.map((i) => i.anchor)).toEqual([
+      { string: 5, fret: 3 },
+      { string: 5, fret: 15 },
+    ]);
+    const aShape = theory.cagedVoicings('C', 'major', 'A');
+    expect(aShape.map((i) => i.anchor)).toEqual([{ string: 5, fret: 3 }]);
+    expect(aShape[0].markers).toEqual(theory.cagedVoicing('C', 'major', 'A'));
+  });
+
+  it('orders the shapes up the neck in the C-A-G-E-D cycle', () => {
+    expect(theory.cagedNeckOrder('C', 'major').map((s) => s.shape)).toEqual(['C', 'A', 'G', 'E', 'D']);
+    expect(theory.cagedNeckOrder('C', 'major').map((s) => s.baseFret)).toEqual([0, 3, 5, 8, 10]);
+    expect(theory.cagedNeckOrder('G', 'major').map((s) => s.shape)).toEqual(['G', 'E', 'D', 'C', 'A']);
+    expect(theory.cagedNeckOrder('A', 'minor')[0]).toMatchObject({ shape: 'A', lowestFret: 0 });
+  });
+
+  it('reduces a shape to the strings each style plays', () => {
+    const gEShape = theory.cagedVoicing('G', 'major', 'E');
+    const played = (style: 'full' | 'rock' | 'groove' | 'worship') =>
+      theory
+        .reduceVoicing('G', gEShape, style)
+        .filter((m) => !m.ghost)
+        .map((m) => `${m.string}:${m.label}`);
+
+    expect(played('full')).toHaveLength(6);
+    expect(played('rock')).toEqual(['6:R', '5:5', '4:R']);
+    expect(played('groove')).toEqual(['4:R', '3:3', '2:5', '1:R']);
+    expect(played('worship')).toEqual(['6:R', '3:3']);
+    // The notes left out stay visible as ghosts.
+    expect(theory.reduceVoicing('G', gEShape, 'rock')).toHaveLength(6);
+
+    const aMinor = theory.cagedVoicing('A', 'minor', 'A');
+    expect(
+      theory.reduceVoicing('A', aMinor, 'worship').filter((m) => !m.ghost).map((m) => `${m.string}:${m.label}`),
+    ).toEqual(['5:R', '2:b3']);
+  });
 });

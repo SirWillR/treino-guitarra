@@ -99,6 +99,44 @@ const FRET_SCOPES: readonly FilterOption<FretScope>[] = [
         </p>
       </section>
 
+      @if (selectedNote(); as note) {
+        <section class="panel mb-5">
+          <label class="flex min-h-11 cursor-pointer items-center gap-2 text-sm text-slate-300 sm:min-h-0">
+            <input type="checkbox" class="accent-amber-400" [checked]="showBlocks()" (change)="showBlocks.set(!showBlocks())" />
+            Ver em blocos (CAGED)
+          </label>
+          @if (showBlocks()) {
+            <p class="mt-2 text-sm text-slate-400">
+              Cada nota se espalha pelo braço em <strong class="text-slate-200">5 blocos</strong> que se repetem. Eles
+              seguem os shapes C, A, G, E e D. O desenho é o mesmo para qualquer nota: só muda o ponto de partida.
+            </p>
+            <div class="mt-3 flex items-center gap-1.5 sm:gap-2">
+              <button type="button" class="chip min-w-11 px-2" aria-label="Bloco anterior" (click)="stepBlock(-1)">◀</button>
+              <div class="grid flex-1 grid-cols-6 gap-1.5 sm:flex sm:flex-none sm:gap-2">
+                <button type="button" class="chip px-1 sm:px-3" [class.chip-active]="blockIndex() === null" (click)="blockIndex.set(null)">Todos</button>
+                @for (block of blocks(); track block.shape; let i = $index) {
+                  <button type="button" class="chip flex flex-col items-center px-1 leading-tight sm:px-3" [class.chip-active]="blockIndex() === i" (click)="blockIndex.set(i)">
+                    <span class="font-bold">{{ i + 1 }}</span>
+                    <span class="text-[10px] opacity-70">{{ block.shape }}</span>
+                  </button>
+                }
+              </div>
+              <button type="button" class="chip min-w-11 px-2" aria-label="Próximo bloco" (click)="stepBlock(1)">▶</button>
+            </div>
+            <p class="mt-3 text-sm text-slate-300">
+              @if (activeBlock(); as block) {
+                <strong class="text-amber-300">Bloco {{ blockIndex()! + 1 }} de 5</strong>: shape de
+                {{ block.shape }}, casas {{ block.lowestFret }}–{{ block.highestFret }}. As notas
+                {{ note }} desse bloco estão destacadas.
+              } @else {
+                Exercício da aula: com uma base tocando, toque só as notas {{ note }}, saltando de um bloco para o
+                outro, para cima e para baixo.
+              }
+            </p>
+          }
+        </section>
+      }
+
       <section class="panel">
         <app-fretboard [markers]="mapMarkers()" [interactive]="true" (positionClick)="selectAt($event)" />
       </section>
@@ -240,13 +278,39 @@ export class FretboardQuiz {
 
   // Free map
   protected readonly selectedNote = signal<NoteName | null>('C');
+  /** Whether the free map splits the note into the five CAGED blocks. */
+  protected readonly showBlocks = signal(false);
+  /** Block in focus, in neck order; null shows the whole neck. */
+  protected readonly blockIndex = signal<number | null>(null);
+  /** The five blocks of the selected note, from the nut upwards: the CAGED shapes of its major chord. */
+  protected readonly blocks = computed(() => {
+    const note = this.selectedNote();
+    return note ? this.theory.cagedNeckOrder(note, 'major') : [];
+  });
+  protected readonly activeBlock = computed(() => {
+    const index = this.blockIndex();
+    return this.showBlocks() && index !== null ? (this.blocks()[index] ?? null) : null;
+  });
+
   protected readonly mapMarkers = computed<FretMarker[]>(() => {
     const note = this.selectedNote();
     if (!note) {
       return [];
     }
     const color = noteColor(note);
-    return this.theory.positionsOf(note).map((p) => ({ ...p, label: note, color }));
+    const positions = this.theory.positionsOf(note);
+    const block = this.activeBlock();
+    if (!block) {
+      return positions.map((p) => ({ ...p, label: note, color }));
+    }
+    const inBlock = this.theory
+      .cagedVoicings(note, 'major', block.shape)
+      .flatMap((instance) => instance.markers.filter((m) => m.isRoot));
+    return positions.map((p) =>
+      inBlock.some((m) => samePosition(m, p))
+        ? { ...p, label: note, color, isRoot: true }
+        : { ...p, label: note, color, ghost: true },
+    );
   });
 
   // Quiz
@@ -315,6 +379,13 @@ export class FretboardQuiz {
     effect(() => writeStored(BEST_STREAK_KEY, this.bestStreak()));
     effect(() => writeStored(SHOW_FOUND_KEY, this.showFound()));
     inject(DestroyRef).onDestroy(() => this.clearTimer());
+  }
+
+  protected stepBlock(direction: 1 | -1): void {
+    const count = this.blocks().length;
+    this.blockIndex.update((index) =>
+      index === null ? (direction === 1 ? 0 : count - 1) : (index + direction + count) % count,
+    );
   }
 
   protected selectNote(note: NoteName): void {

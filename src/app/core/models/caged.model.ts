@@ -1,5 +1,5 @@
 import { PerString } from './chord.model';
-import { GuitarString } from './fretboard.model';
+import { FretMarker, FretPosition, GuitarString } from './fretboard.model';
 import { TriadQuality } from './note.model';
 
 export const CAGED_SHAPE_NAMES = ['C', 'A', 'G', 'E', 'D'] as const;
@@ -22,3 +22,22 @@ export interface CagedAnchor {
   /** Fret where the shape's "nut" (barre) sits. */
   baseFret: number;
 }
+
+/** One place on the neck where a shape fits. */
+export interface CagedInstance {
+  baseFret: number;
+  /** The root on the shape's lowest root string: where the hand anchors. */
+  anchor: FretPosition;
+  markers: FretMarker[];
+}
+
+/** A shape as a stop on the way up the neck. */
+export interface CagedNeckStop {
+  shape: CagedShapeName;
+  baseFret: number;
+  lowestFret: number;
+  highestFret: number;
+}
+
+/** Ways of playing a reduced shape, as in the lesson: full, power chord, top strings, root + third. */
+export type VoicingStyle = 'full' | 'rock' | 'groove' | 'worship';
