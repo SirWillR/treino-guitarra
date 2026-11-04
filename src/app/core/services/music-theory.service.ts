@@ -13,12 +13,6 @@ import {
   NoteName,
   TriadQuality,
 } from '../models/note.model';
-import {
-  STRING_SET_STRINGS,
-  StringSet,
-  TriadInversion,
-  TriadVoicing,
-} from '../models/triad.model';
 
 /** MIDI numbers of the open strings in standard tuning (E A D G B E). */
 const OPEN_STRING_MIDI: Record<GuitarString, number> = { 1: 64, 2: 59, 3: 55, 4: 50, 5: 45, 6: 40 };
@@ -34,8 +28,6 @@ const CHORD_FORMULAS: Record<ChordQuality, readonly Interval[]> = {
 };
 
 const MAJOR_SCALE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
-
-const INVERSIONS: readonly TriadInversion[] = ['root', 'first', 'second'];
 
 export const MAX_FRET = 15;
 
@@ -188,58 +180,6 @@ export class MusicTheoryService {
       }
     });
     return markers;
-  }
-
-  /**
-   * Close-position triads on three adjacent strings, every inversion that fits on the neck,
-   * ordered from the nut upwards so stepping through the list walks up the fretboard.
-   */
-  triadVoicings(root: NoteName, quality: TriadQuality, stringSet: StringSet): TriadVoicing[] {
-    const strings = STRING_SET_STRINGS[stringSet];
-    const tones = CHORD_FORMULAS[quality];
-    const voicings: TriadVoicing[] = [];
-
-    INVERSIONS.forEach((inversion, rotation) => {
-      const formula = [...tones.slice(rotation), ...tones.slice(0, rotation)];
-      let frets = this.closeVoicingFrets(root, formula, strings);
-      if (Math.min(...frets) < 0) {
-        frets = frets.map((fret) => fret + 12);
-      }
-      for (; Math.max(...frets) <= MAX_FRET; frets = frets.map((fret) => fret + 12)) {
-        voicings.push({
-          inversion,
-          formula,
-          markers: frets.map((fret, i) => this.intervalMarker(strings[i], fret, formula[i])),
-          lowestFret: Math.min(...frets),
-        });
-      }
-    });
-
-    return voicings.sort((a, b) => a.lowestFret - b.lowestFret);
-  }
-
-  /** Frets for chord tones stacked upwards from the lowest string; may be negative. */
-  private closeVoicingFrets(
-    root: NoteName,
-    formula: readonly Interval[],
-    strings: readonly GuitarString[],
-  ): number[] {
-    const rootPitchClass = this.pitchClass(root);
-    const frets: number[] = [];
-    let previousPitch = 0;
-
-    formula.forEach((interval, i) => {
-      const pitchClass = mod12(rootPitchClass + INTERVAL_SEMITONES[interval]);
-      const open = OPEN_STRING_MIDI[strings[i]];
-      // Bass note: lowest fret on its string. Others: nearest pitch above the previous tone.
-      const pitch =
-        i === 0
-          ? open + mod12(pitchClass - open)
-          : previousPitch + (mod12(pitchClass - previousPitch) || 12);
-      frets.push(pitch - open);
-      previousPitch = pitch;
-    });
-    return frets;
   }
 
   private intervalMarker(string: GuitarString, fret: number, interval: Interval): FretMarker {

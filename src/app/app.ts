@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { formatClock, PracticeTimerService } from './core/services/practice-timer.service';
 import { UpdateService } from './core/services/update.service';
 import { WakeLockService } from './core/services/wake-lock.service';
 import { LESSONS } from './features/lessons/lessons.registry';
@@ -23,10 +24,10 @@ interface NavItem {
 })
 export class App {
   protected readonly navItems: readonly NavItem[] = [
+    { path: '/treino', label: 'Treino Diário', shortLabel: 'Treino', icon: '⏱️' },
     { path: '/braco', label: 'Braço & Quiz', shortLabel: 'Braço', icon: '🎸' },
     { path: '/acordes', label: 'Troca de Acordes', shortLabel: 'Acordes', icon: '🔁' },
     { path: '/caged', label: 'Sistema CAGED', shortLabel: 'CAGED', icon: '🧩' },
-    { path: '/triades', label: 'Tríades', shortLabel: 'Tríades', icon: '🔺' },
   ];
   protected readonly lessons = LESSONS;
 
@@ -38,6 +39,10 @@ export class App {
   protected readonly lessonsActive = signal(false);
 
   protected readonly update = inject(UpdateService);
+  protected readonly timer = inject(PracticeTimerService);
+  protected readonly timerClock = computed(() => formatClock(this.timer.remainingMs()));
+  /** Whether the daily routine page is open (the floating timer is hidden there). */
+  protected readonly onRoutine = signal(false);
 
   constructor() {
     inject(WakeLockService).start();
@@ -50,6 +55,7 @@ export class App {
       )
       .subscribe((event) => {
         const inLessons = event.urlAfterRedirects.startsWith('/licoes');
+        this.onRoutine.set(event.urlAfterRedirects.startsWith('/treino'));
         this.lessonsActive.set(inLessons);
         this.sheetOpen.set(false);
         // Landing on a lesson reveals the submenu so the current lesson is always visible.

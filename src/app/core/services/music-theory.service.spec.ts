@@ -2,7 +2,6 @@ import { CHORDS } from '../data/chords.data';
 import { TEACHER_LESSON, WARMUP_VARIATIONS } from '../data/lessons.data';
 import { CAGED_SHAPE_NAMES } from '../models/caged.model';
 import { NOTE_NAMES } from '../models/note.model';
-import { STRING_SETS } from '../models/triad.model';
 import { MAX_FRET, MusicTheoryService } from './music-theory.service';
 
 describe('MusicTheoryService', () => {
@@ -170,41 +169,5 @@ describe('MusicTheoryService', () => {
       '1@6', '2@5', '3@6', '4@5', '1@5', '2@4', '3@5', '4@4',
     ]);
     expect(sequence('1324').slice(0, 4)).toEqual(['1@6', '3@6', '2@6', '4@6']);
-  });
-
-  it('maps the three inversions of C major on strings 1-2-3', () => {
-    const voicings = theory.triadVoicings('C', 'major', '1-2-3');
-    const frets = (inversion: string) =>
-      voicings.filter((v) => v.inversion === inversion).map((v) => v.markers.map((m) => m.fret));
-
-    // Frets listed from string 3 to string 1.
-    expect(frets('root')).toEqual([[5, 5, 3]]);
-    expect(frets('first')).toEqual([[9, 8, 8]]);
-    expect(frets('second')).toEqual([[0, 1, 0], [12, 13, 12]]);
-    expect(voicings.map((v) => v.lowestFret)).toEqual([0, 3, 8, 12]);
-  });
-
-  it('builds playable close triads for every root, quality and string set', () => {
-    for (const root of NOTE_NAMES) {
-      for (const quality of ['major', 'minor'] as const) {
-        const tones = theory.chordTones(root, quality);
-        for (const stringSet of STRING_SETS) {
-          const voicings = theory.triadVoicings(root, quality, stringSet);
-          const label = `${root} ${quality} ${stringSet}`;
-          expect(new Set(voicings.map((v) => v.inversion)).size, label).toBe(3);
-
-          for (const voicing of voicings) {
-            const notes = voicing.markers.map((m) => theory.noteAt(m.string, m.fret));
-            const fretSpan = voicing.markers.map((m) => m.fret);
-            expect([...notes].sort(), label).toEqual([...tones].sort());
-            expect(Math.max(...fretSpan) - Math.min(...fretSpan), label).toBeLessThanOrEqual(3);
-            voicing.markers.forEach((m, i) => {
-              expect(theory.intervalOf(root, notes[i]), label).toBe(voicing.formula[i]);
-              expect(m.label, label).toBe(voicing.formula[i]);
-            });
-          }
-        }
-      }
-    }
   });
 });

@@ -1,7 +1,7 @@
 # Treino de Guitarra
 
-App de treino diário de guitarra: memorização das notas do braço, troca de acordes com metrônomo,
-sistema CAGED, tríades fechadas e as lições da aula (digitação e progressões com dicas).
+App de treino diário de guitarra: rotina de 30 minutos com timer, memorização das notas do braço,
+troca de acordes com metrônomo, sistema CAGED e as lições da aula (digitação e progressões com dicas).
 
 Angular 22 (standalone components, Signals, zoneless) + Tailwind CSS 4. O braço e os diagramas são
 SVG puro e o metrônomo usa a Web Audio API — não há outras dependências.
@@ -31,18 +31,18 @@ versão nova e oferece o botão **Atualizar**. O ícone fica em `public/icons/ic
 
 | Aba | Rota | O que faz |
 | --- | --- | --- |
+| Treino Diário | `/treino` | Rotina de 30 min em 5 blocos (aquecimento, acordes, ritmo, braço, músicas) com timer, bipe na troca de bloco e contagem de dias seguidos |
 | Braço & Quiz | `/braco` | Mapa livre de uma nota em todo o braço e quiz de identificação com pontuação e sequência |
 | Troca de Acordes | `/acordes` | Os 7 acordes maiores e 7 menores e o treinador de troca (2 a 4 acordes, troca a cada 1, 2 ou 4 compassos) |
 | Sistema CAGED | `/caged` | Os 5 shapes de qualquer acorde maior ou menor, com intervalos e tônica de ancoragem |
-| Tríades | `/triades` | Inversões de tríades maiores e menores nos grupos de cordas 1-2-3, 2-3-4 e 3-4-5 |
-| Lições da Aula | `/licoes` | Uma lição por submenu: aquecimento cromático, escala maior e digitação, progressões com dicas |
+| Lições da Aula | `/licoes` | Uma lição por submenu: aquecimento cromático, ritmo e batida (padrões com setas no tempo do metrônomo), escala maior e digitação, progressões com dicas |
 
 ## Estrutura
 
 ```
 src/app/
   core/
-    models/     tipos: notas, braço, acordes, CAGED, tríades, lições
+    models/     tipos: notas, braço, acordes, CAGED, lições, rotina
     data/       acordes, shapes do CAGED e conteúdo das lições
     services/   music-theory.service (teoria, sem estado) e metronome.service (Web Audio)
   shared/       app-fretboard, app-chord-diagram, app-metronome, app-scale-exercise,

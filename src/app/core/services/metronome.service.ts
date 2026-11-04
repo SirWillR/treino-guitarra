@@ -10,6 +10,9 @@ const SCHEDULE_AHEAD_S = 0.1;
 const TAP_RESET_MS = 2000;
 const MAX_TAPS = 5;
 
+const CLICK_FREQUENCY = { accent: 1500, beat: 1000, eighth: 2000 } as const;
+const CLICK_VOLUME = { accent: 0.35, beat: 0.2, eighth: 0.08 } as const;
+
 /**
  * Metronome on the Web Audio clock. Clicks are scheduled slightly ahead of time so their timing
  * does not depend on timer jitter; `tick` is advanced when each click is actually heard.
@@ -19,10 +22,16 @@ export class MetronomeService {
   private readonly _bpm = signal(clampBpm(readStored(BPM_STORAGE_KEY, 80)));
   private readonly _isPlaying = signal(false);
   private readonly _tick = signal(-1);
+  private readonly _eighth = signal(-1);
 
   readonly bpm = this._bpm.asReadonly();
   readonly isPlaying = this._isPlaying.asReadonly();
   readonly beatsPerBar = signal(4);
+  /** Also click, more softly, on the "and" between beats. */
+  readonly clickEighths = signal(false);
+
+  /** Eighth notes elapsed since play was pressed (0-based); -1 while stopped. */
+  readonly eighth = this._eighth.asReadonly();
 
   /** Beats elapsed since play was pressed (0-based); -1 while stopped. */
   readonly tick = this._tick.asReadonly();
@@ -38,8 +47,9 @@ export class MetronomeService {
   private audio: AudioContext | null = null;
   private schedulerId: ReturnType<typeof setInterval> | null = null;
   private visualTimers: ReturnType<typeof setTimeout>[] = [];
-  private nextBeatTime = 0;
-  private nextBeat = 0;
+  /** Time of the next eighth note to schedule; even steps fall on the beat. */
+  private nextStepTime = 0;
+  private nextStep = 0;
   private tapTimes: number[] = [];
 
   constructor() {
@@ -66,8 +76,8 @@ export class MetronomeService {
     this.audio ??= new AudioContext();
     void this.audio.resume();
 
-    this.nextBeat = 0;
-    this.nextBeatTime = this.audio.currentTime + 0.06;
+    this.nextStep = 0;
+    this.nextStepTime = this.audio.currentTime + 0.06;
     this._isPlaying.set(true);
     this.schedule();
     this.schedulerId = setInterval(() => this.schedule(), SCHEDULER_INTERVAL_MS);
@@ -82,6 +92,7 @@ export class MetronomeService {
     this.visualTimers = [];
     this._isPlaying.set(false);
     this._tick.set(-1);
+    this._eighth.set(-1);
   }
 
   /** Sets the tempo from the average interval between recent taps. */
@@ -104,31 +115,46 @@ export class MetronomeService {
     if (!audio) {
       return;
     }
-    while (this.nextBeatTime < audio.currentTime + SCHEDULE_AHEAD_S) {
-      const beat = this.nextBeat;
-      const time = this.nextBeatTime;
-      this.playClick(audio, time, beat % this.beatsPerBar() === 0);
+    while (this.nextStepTime < audio.currentTime + SCHEDULE_AHEAD_S) {
+      const step = this.nextStep;
+      const time = this.nextStepTime;
+      const onBeat = step % 2 === 0;
+      const beat = step / 2;
+
+      if (onBeat) {
+        this.playClick(audio, time, beat % this.beatsPerBar() === 0 ? 'accent' : 'beat');
+      } else if (this.clickEighths()) {
+        this.playClick(audio, time, 'eighth');
+      }
 
       const delayMs = Math.max(0, (time - audio.currentTime) * 1000);
-      this.visualTimers.push(setTimeout(() => this._tick.set(beat), delayMs));
+      this.visualTimers.push(
+        setTimeout(() => {
+          this._eighth.set(step);
+          if (onBeat) {
+            this._tick.set(beat);
+          }
+        }, delayMs),
+      );
 
-      this.nextBeat++;
-      this.nextBeatTime += 60 / this._bpm();
+      this.nextStep++;
+      // Read every step, so a tempo change applies from the next eighth note.
+      this.nextStepTime += 30 / this._bpm();
     }
     // Timers that already fired are the oldest ones; keep the list from growing forever.
-    if (this.visualTimers.length > 32) {
-      this.visualTimers = this.visualTimers.slice(-16);
+    if (this.visualTimers.length > 64) {
+      this.visualTimers = this.visualTimers.slice(-32);
     }
   }
 
-  private playClick(audio: AudioContext, time: number, accent: boolean): void {
+  private playClick(audio: AudioContext, time: number, kind: 'accent' | 'beat' | 'eighth'): void {
     const oscillator = audio.createOscillator();
     const gain = audio.createGain();
     oscillator.type = 'square';
-    oscillator.frequency.value = accent ? 1500 : 1000;
+    oscillator.frequency.value = CLICK_FREQUENCY[kind];
 
     gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.exponentialRampToValueAtTime(accent ? 0.35 : 0.2, time + 0.002);
+    gain.gain.exponentialRampToValueAtTime(CLICK_VOLUME[kind], time + 0.002);
     gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
 
     oscillator.connect(gain).connect(audio.destination);

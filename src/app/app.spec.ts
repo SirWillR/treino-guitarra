@@ -20,10 +20,10 @@ describe('App', () => {
     const nav = (fixture.nativeElement as HTMLElement).querySelector('nav')!;
 
     expect(labels(nav.querySelectorAll(':scope > a'))).toEqual([
+      '⏱️ Treino Diário',
       '🎸 Braço & Quiz',
       '🔁 Troca de Acordes',
       '🧩 Sistema CAGED',
-      '🔺 Tríades',
     ]);
     const toggle = nav.querySelector('button')!;
     expect(toggle.textContent).toContain('Lições da Aula');
@@ -43,8 +43,9 @@ describe('App', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(labels(nav.querySelectorAll('#lessons-submenu a'))).toEqual([
       '1. Aquecimento',
-      '2. Escala & Digitação',
-      '3. Progressões Harmônicas',
+      '2. Ritmo & Batida',
+      '3. Escala & Digitação',
+      '4. Progressões Harmônicas',
     ]);
   });
 
@@ -55,10 +56,10 @@ describe('App', () => {
     const tabBar = root.querySelectorAll('nav')[1];
 
     expect(labels(tabBar.querySelectorAll('a'))).toEqual([
+      '⏱️ Treino',
       '🎸 Braço',
       '🔁 Acordes',
       '🧩 CAGED',
-      '🔺 Tríades',
     ]);
     const toggle = tabBar.querySelector('button')!;
     expect(root.querySelector('#lessons-sheet')).toBeNull();
@@ -67,6 +68,6 @@ describe('App', () => {
     await fixture.whenStable();
 
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    expect(root.querySelectorAll('#lessons-sheet a').length).toBe(3);
+    expect(root.querySelectorAll('#lessons-sheet a').length).toBe(4);
   });
 });

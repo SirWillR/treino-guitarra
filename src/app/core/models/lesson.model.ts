@@ -44,6 +44,19 @@ export interface ChordProgression {
   tip: PracticeTip;
 }
 
+/** A strum on one eighth note; `ghost` is the hand passing in the air without hitting the strings. */
+export type StrumStroke = 'down' | 'up' | 'ghost';
+
+export interface StrummingPattern {
+  id: string;
+  name: string;
+  /** One bar of 4/4 in eighth notes: 1 e 2 e 3 e 4 e. */
+  strokes: readonly StrumStroke[];
+  description: string;
+  /** What it trains. */
+  focus: string;
+}
+
 export interface TeacherLesson {
   scalePattern: readonly ScaleExerciseStep[];
   scaleStartFrets: readonly number[];

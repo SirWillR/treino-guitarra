@@ -2,7 +2,13 @@ import { Routes } from '@angular/router';
 import { LESSONS } from './features/lessons/lessons.registry';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'braco' },
+  { path: '', pathMatch: 'full', redirectTo: 'treino' },
+  {
+    path: 'treino',
+    title: 'Treino Diário · Treino de Guitarra',
+    loadComponent: () =>
+      import('./features/daily-routine/daily-routine').then((m) => m.DailyRoutine),
+  },
   {
     path: 'braco',
     title: 'Braço & Quiz · Treino de Guitarra',
@@ -21,11 +27,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/caged/caged').then((m) => m.Caged),
   },
   {
-    path: 'triades',
-    title: 'Tríades · Treino de Guitarra',
-    loadComponent: () => import('./features/triads/triads').then((m) => m.Triads),
-  },
-  {
     path: 'licoes',
     title: 'Lições da Aula · Treino de Guitarra',
     loadComponent: () => import('./features/lessons/lessons').then((m) => m.Lessons),
@@ -39,5 +40,5 @@ export const routes: Routes = [
       { path: '**', redirectTo: LESSONS[0].slug },
     ],
   },
-  { path: '**', redirectTo: 'braco' },
+  { path: '**', redirectTo: 'treino' },
 ];

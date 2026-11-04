@@ -20,6 +20,12 @@ export const LESSONS: readonly LessonEntry[] = [
     loadComponent: () => import('./warmup-practice').then((m) => m.WarmupPractice),
   },
   {
+    slug: 'ritmo',
+    title: 'Ritmo & Batida',
+    summary: 'Padrões de batida com setas no tempo do metrônomo',
+    loadComponent: () => import('./rhythm-practice').then((m) => m.RhythmPractice),
+  },
+  {
     slug: 'escala',
     title: 'Escala & Digitação',
     summary: 'O padrão da aula (cordas 5, 4 e 3) e a escala maior nas 6 cordas',

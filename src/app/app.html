@@ -133,6 +133,19 @@
     </div>
   }
 
+  @if (timer.inProgress() && !onRoutine()) {
+    <!-- The routine timer stays in view while the student uses another page for the current block. -->
+    <a
+      class="fixed right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex items-center gap-2 rounded-full border border-amber-400/40 bg-slate-900 px-4 py-2 text-sm text-slate-200 shadow-lg lg:right-6 lg:bottom-6"
+      routerLink="/treino"
+      [attr.aria-label]="'Voltar ao treino diário: ' + timer.block().title + ', faltam ' + timerClock()"
+    >
+      <span aria-hidden="true">{{ timer.isRunning() ? timer.block().icon : '❚❚' }}</span>
+      <span class="hidden sm:inline">{{ timer.block().title }}</span>
+      <span class="font-semibold text-amber-300 tabular-nums">{{ timerClock() }}</span>
+    </a>
+  }
+
   @if (update.ready()) {
     <!-- Above the bottom tab bar on phones; bottom-right corner on desktop. -->
     <div
